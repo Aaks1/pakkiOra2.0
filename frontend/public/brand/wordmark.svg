@@ -1,0 +1,13 @@
+<!-- PakkiOra wordmark  use on light backgrounds -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 148 32" fill="none" role="img" aria-label="PakkiOra">
+  <text
+    x="0"
+    y="24"
+    font-family="Inter, system-ui, -apple-system, sans-serif"
+    font-size="22"
+    font-weight="600"
+    letter-spacing="-0.03em"
+  >
+    <tspan fill="#18181B">Pakki</tspan><tspan fill="#0F766E">Ora</tspan>
+  </text>
+</svg>

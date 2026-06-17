@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+.Python
+
+# Django
+*.log
+*.sqlite3
+db.sqlite3
+db.sqlite3-journal
+local_settings.py
+
+# Environment & secrets (never commit)
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Node / React (frontend/)
+node_modules/
+dist/
+build/
+.vite/
+*.local
+
+# Coverage & test caches
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+.mypy_cache/
+.hypothesis/
+
+# Media uploads (user content)
+media/
+!media/.gitkeep

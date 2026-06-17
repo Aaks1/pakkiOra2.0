@@ -1,0 +1,177 @@
+from datetime import datetime
+
+from django.utils import timezone
+from django_filters import rest_framework as filters
+from drf_spectacular.utils import extend_schema, extend_schema_view
+from rest_framework import mixins, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+
+from api.permissions import IsAdminUser, is_admin_user
+from api.responses import success_response
+from api.v1.serializers.doctors import (
+    DoctorAvailabilitySerializer,
+    DoctorSerializer,
+    DoctorSlotConfigSerializer,
+    DoctorWriteSerializer,
+)
+from appointments.services import AvailabilityService, SlotService
+from doctors.models import Doctor, DoctorAvailability
+
+
+class DoctorFilter(filters.FilterSet):
+    specialization = filters.CharFilter(field_name="specialization", lookup_expr="icontains")
+    is_active = filters.BooleanFilter(field_name="is_active")
+
+    class Meta:
+        model = Doctor
+        fields = ["specialization", "is_active", "department"]
+
+
+@extend_schema_view(
+    list=extend_schema(tags=["Doctors"]),
+    retrieve=extend_schema(tags=["Doctors"]),
+    create=extend_schema(tags=["Admin - Doctors"]),
+    update=extend_schema(tags=["Admin - Doctors"]),
+    partial_update=extend_schema(tags=["Admin - Doctors"]),
+    destroy=extend_schema(tags=["Admin - Doctors"]),
+)
+class DoctorViewSet(viewsets.ModelViewSet):
+    queryset = Doctor.objects.all().order_by("first_name", "last_name")
+    filterset_class = DoctorFilter
+    search_fields = ["first_name", "last_name", "specialization", "email", "department"]
+    ordering_fields = ["first_name", "last_name", "created_at", "specialization"]
+    ordering = ["first_name", "last_name"]
+
+    def get_permissions(self):
+        if self.action in ("create", "update", "partial_update", "destroy", "slots", "toggle_active"):
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+
+    def get_serializer_class(self):
+        if self.action in ("create", "update", "partial_update"):
+            return DoctorWriteSerializer
+        return DoctorSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if not is_admin_user(self.request.user):
+            qs = qs.filter(is_active=True)
+        return qs
+
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        return success_response(data=response.data)
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        return success_response(
+            data=response.data,
+            message="Doctor created successfully",
+            status_code=response.status_code,
+        )
+
+    def update(self, request, *args, **kwargs):
+        response = super().update(request, *args, **kwargs)
+        return success_response(data=response.data, message="Doctor updated successfully")
+
+    def partial_update(self, request, *args, **kwargs):
+        response = super().partial_update(request, *args, **kwargs)
+        return success_response(data=response.data, message="Doctor updated successfully")
+
+    def destroy(self, request, *args, **kwargs):
+        super().destroy(request, *args, **kwargs)
+        return success_response(message="Doctor deleted successfully")
+
+    @extend_schema(tags=["Doctors"])
+    @action(detail=True, methods=["get"], url_path="available-dates")
+    def available_dates(self, request, pk=None):
+        doctor = self.get_object()
+        today = timezone.now().date()
+        days = int(request.query_params.get("days", 30))
+        dates = AvailabilityService.get_available_dates(doctor, today, days_ahead=days)
+        return success_response(
+            data={"dates": [d.isoformat() for d in dates if d >= today]},
+        )
+
+    @extend_schema(tags=["Doctors"])
+    @action(detail=True, methods=["get"])
+    def slots(self, request, pk=None):
+        doctor = self.get_object()
+        date_str = request.query_params.get("date")
+        if not date_str:
+            return success_response(
+                data={"slots": []},
+                message="Provide a date query parameter (YYYY-MM-DD)",
+            )
+        try:
+            selected_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            return success_response(
+                data={"slots": []},
+                message="Invalid date format. Use YYYY-MM-DD.",
+            )
+
+        today = timezone.now().date()
+        if selected_date < today:
+            return success_response(data={"slots": [], "date": date_str})
+
+        slots = SlotService.get_available_slots(doctor, selected_date)
+        return success_response(
+            data={
+                "date": date_str,
+                "is_available": bool(slots),
+                "slots": SlotService.serialize_slots(slots),
+            },
+        )
+
+    @extend_schema(request=DoctorSlotConfigSerializer, tags=["Admin - Doctors"])
+    @action(detail=True, methods=["get", "patch"], url_path="slot-config")
+    def slot_config(self, request, pk=None):
+        doctor = self.get_object()
+
+        if request.method == "GET":
+            overrides = DoctorAvailability.objects.filter(doctor=doctor).order_by("-date")[:20]
+            return success_response(
+                data={
+                    "available_days": doctor.available_days,
+                    "time_slots": doctor.time_slots,
+                    "overrides": DoctorAvailabilitySerializer(overrides, many=True).data,
+                },
+            )
+
+        serializer = DoctorSlotConfigSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        if "available_days" in data:
+            doctor.available_days = data["available_days"]
+        if "time_slots" in data:
+            doctor.time_slots = data["time_slots"]
+        doctor.save(update_fields=["available_days", "time_slots", "updated_at"])
+
+        override_date = data.get("override_date")
+        if override_date is not None and data.get("override_is_available") is not None:
+            availability, _ = DoctorAvailability.objects.get_or_create(
+                doctor=doctor,
+                date=override_date,
+            )
+            availability.is_available = data["override_is_available"]
+            availability.notes = data.get("override_notes", "")
+            availability.save()
+
+        return success_response(message="Slot configuration updated successfully")
+
+    @extend_schema(tags=["Admin - Doctors"])
+    @action(detail=True, methods=["post"], url_path="toggle-active")
+    def toggle_active(self, request, pk=None):
+        doctor = self.get_object()
+        doctor.is_active = not doctor.is_active
+        doctor.save(update_fields=["is_active", "updated_at"])
+        return success_response(
+            data={"is_active": doctor.is_active},
+            message=f"Doctor {'activated' if doctor.is_active else 'deactivated'} successfully",
+        )
