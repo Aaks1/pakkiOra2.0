@@ -65,7 +65,7 @@ export default function RegisterForm() {
     setLoading(true)
     try {
       await register(buildRegisterPayload(form))
-      navigate('/')
+      navigate('/patient')
     } catch (err) {
       setError(getErrorMessage(err))
     } finally {

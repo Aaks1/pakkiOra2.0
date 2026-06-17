@@ -18,8 +18,8 @@ export default function LoginForm() {
     setError('')
     setLoading(true)
     try {
-      await login(form.username.trim(), form.password)
-      navigate('/')
+      const user = await login(form.username.trim(), form.password)
+      navigate(user?.is_staff || user?.role === 'admin' ? '/admin' : '/patient')
     } catch (err) {
       setError(getErrorMessage(err))
     } finally {
