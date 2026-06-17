@@ -87,6 +87,25 @@
   font-size: 1.0625rem;
 }
 
+.dashboard-feedback {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.dashboard-feedback--error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+}
+
+.dashboard-feedback--success {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+}
+
 .dashboard-list {
   list-style: none;
   padding: 0;
@@ -134,6 +153,94 @@
   border-color: var(--primary-200);
   color: var(--primary-700);
   background: var(--primary-50);
+}
+
+.dashboard-card__hint {
+  margin: -0.5rem 0 1rem;
+  font-size: 0.8125rem;
+  color: var(--gray-500);
+}
+
+.dashboard-form {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.dashboard-form--grid {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+@media (min-width: 640px) {
+  .dashboard-form--grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.dashboard-form--grid .form-field {
+  margin-bottom: 0.875rem;
+}
+
+.dashboard-form__actions {
+  grid-column: 1 / -1;
+  margin-top: 0.25rem;
+}
+
+.dashboard-input {
+  width: 100%;
+  border: 1px solid var(--gray-300);
+  border-radius: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.dashboard-input:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.dashboard-submit {
+  border: none;
+  border-radius: 0.625rem;
+  padding: 0.65rem 0.8rem;
+  background: linear-gradient(135deg, var(--primary-600), var(--secondary-600));
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.dashboard-table-wrap {
+  overflow-x: auto;
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 32rem;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+  text-align: left;
+  padding: 0.7rem 0.625rem;
+  border-bottom: 1px solid var(--gray-200);
+  font-size: 0.875rem;
+}
+
+.dashboard-table th {
+  color: var(--gray-600);
+  font-weight: 600;
+}
+
+.dashboard-table__empty {
+  text-align: center;
+  color: var(--gray-600);
 }
 
 .dashboard-stats {

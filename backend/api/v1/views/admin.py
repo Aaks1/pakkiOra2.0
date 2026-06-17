@@ -40,7 +40,7 @@ class AdminStaffViewSet(viewsets.ModelViewSet):
     """Manage admin/staff accounts."""
     permission_classes = [IsAdminUser]
     serializer_class = AdminUserSerializer
-    queryset = User.objects.filter(is_staff=True).order_by("-date_joined")
+    queryset = User.objects.filter(is_staff=True).select_related("admin_profile").order_by("-date_joined")
     search_fields = ["username", "first_name", "last_name", "email"]
     ordering_fields = ["date_joined", "username"]
     http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]

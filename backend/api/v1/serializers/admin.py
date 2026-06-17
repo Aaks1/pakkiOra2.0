@@ -44,6 +44,13 @@ class AdminUserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"password": "Password is required for new admin users."})
         return attrs
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        profile = getattr(instance, "admin_profile", None)
+        data["phone"] = profile.phone if profile else ""
+        data["department"] = profile.department if profile else ""
+        return data
+
     def create(self, validated_data):
         phone = validated_data.pop("phone", "")
         department = validated_data.pop("department", "")
