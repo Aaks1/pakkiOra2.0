@@ -1,3 +1,5 @@
+import { normalizeList } from './apiList'
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export const ADMIN_STAFF_INITIAL = {
@@ -44,7 +46,5 @@ export function validateAdminStaffForm(form) {
 }
 
 export function normalizeAdminList(payload) {
-  if (Array.isArray(payload)) return payload
-  if (Array.isArray(payload?.results)) return payload.results
-  return []
+  return normalizeList(payload)
 }

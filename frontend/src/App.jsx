@@ -4,14 +4,19 @@ import Landing from './pages/Landing'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import PatientDashboard from './pages/dashboard/PatientDashboard'
-import AdminDashboard from './pages/dashboard/AdminDashboard'
+import AdminLayout from './components/admin/AdminLayout'
+import AdminOverview from './pages/admin/AdminOverview'
+import AdminUsers from './pages/admin/AdminUsers'
+import AdminStaff from './pages/admin/AdminStaff'
+import AdminAppointments from './pages/admin/AdminAppointments'
+import AdminDoctors from './pages/admin/AdminDoctors'
 
 function ProtectedRoute({ children, requireAdmin = false }) {
   const { isAuthenticated, isAdmin } = useAuth()
 
   if (!isAuthenticated) return <Navigate to="/login" replace />
   if (requireAdmin && !isAdmin) return <Navigate to="/patient" replace />
-  if (!requireAdmin && isAdmin) return <Navigate to="/admin" replace />
+  if (!requireAdmin && isAdmin) return <Navigate to="/admin/dashboard" replace />
 
   return children
 }
@@ -20,7 +25,7 @@ function AuthOnlyRoute({ children }) {
   const { isAuthenticated, isAdmin } = useAuth()
 
   if (isAuthenticated) {
-    return <Navigate to={isAdmin ? '/admin' : '/patient'} replace />
+    return <Navigate to={isAdmin ? '/admin/dashboard' : '/patient'} replace />
   }
 
   return children
@@ -46,10 +51,17 @@ export default function App() {
             path="/admin"
             element={(
               <ProtectedRoute requireAdmin>
-                <AdminDashboard />
+                <AdminLayout />
               </ProtectedRoute>
             )}
-          />
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<AdminOverview />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="admins" element={<AdminStaff />} />
+            <Route path="appointments" element={<AdminAppointments />} />
+            <Route path="doctors" element={<AdminDoctors />} />
+          </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

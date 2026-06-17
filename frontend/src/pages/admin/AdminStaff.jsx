@@ -1,27 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
-import DashboardLayout from '../../components/dashboard/DashboardLayout'
 import CreateAdminForm from '../../components/admin/CreateAdminForm'
-import { getAdminStats, listAdminStaff } from '../../api/admin'
+import AdminPageHeader from '../../components/admin/AdminPageHeader'
+import { listAdminStaff } from '../../api/admin'
 import { getErrorMessage } from '../../api/axios'
-import { normalizeAdminList } from '../../utils/adminStaff'
+import { normalizeList } from '../../utils/apiList'
 
-export default function AdminDashboard() {
-  const [stats, setStats] = useState(null)
+export default function AdminStaff() {
   const [staff, setStaff] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const loadDashboard = useCallback(async () => {
+  const loadStaff = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
-      const [statsData, staffData] = await Promise.all([
-        getAdminStats(),
-        listAdminStaff(),
-      ])
-      setStats(statsData)
-      setStaff(normalizeAdminList(staffData))
+      const data = await listAdminStaff()
+      setStaff(normalizeList(data))
     } catch (err) {
       setError(getErrorMessage(err))
     } finally {
@@ -30,43 +25,25 @@ export default function AdminDashboard() {
   }, [])
 
   useEffect(() => {
-    loadDashboard()
-  }, [loadDashboard])
+    loadStaff()
+  }, [loadStaff])
 
   const handleAdminCreated = async () => {
     setSuccess('Admin account created successfully.')
-    await loadDashboard()
+    await loadStaff()
   }
 
-  const statCards = [
-    { label: 'Total patients', value: stats?.total_users ?? '—' },
-    { label: 'Appointments today', value: stats?.todays_appointments ?? '—' },
-    { label: 'Active doctors', value: stats?.active_doctors ?? '—' },
-    { label: 'Total admins', value: stats?.total_admins ?? '—' },
-  ]
-
   return (
-    <DashboardLayout
-      role="admin"
-      title="Admin Dashboard"
-      subtitle="Monitor clinic operations and create staff admin accounts."
-    >
+    <>
+      <AdminPageHeader
+        title="Admin Management"
+        subtitle="Create staff accounts and manage admin users."
+      />
+
       {error ? <p className="dashboard-feedback dashboard-feedback--error">{error}</p> : null}
       {success ? <p className="dashboard-feedback dashboard-feedback--success">{success}</p> : null}
 
       <section className="dashboard-grid">
-        <article className="dashboard-card dashboard-card--span">
-          <h2 className="dashboard-card__title">Overview</h2>
-          <div className="dashboard-stats">
-            {statCards.map((stat) => (
-              <div key={stat.label} className="dashboard-stat">
-                <p className="dashboard-stat__value">{loading ? '…' : stat.value}</p>
-                <p className="dashboard-stat__label">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </article>
-
         <CreateAdminForm onCreated={handleAdminCreated} />
 
         <article className="dashboard-card dashboard-card--span">
@@ -78,6 +55,7 @@ export default function AdminDashboard() {
                   <th>Username</th>
                   <th>Name</th>
                   <th>Email</th>
+                  <th>Phone</th>
                   <th>Department</th>
                   <th>Status</th>
                 </tr>
@@ -85,7 +63,7 @@ export default function AdminDashboard() {
               <tbody>
                 {staff.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="dashboard-table__empty">
+                    <td colSpan={6} className="dashboard-table__empty">
                       {loading ? 'Loading admin users…' : 'No admin users found.'}
                     </td>
                   </tr>
@@ -95,8 +73,13 @@ export default function AdminDashboard() {
                       <td>{admin.username}</td>
                       <td>{`${admin.first_name || ''} ${admin.last_name || ''}`.trim() || '—'}</td>
                       <td>{admin.email || '—'}</td>
+                      <td>{admin.phone || '—'}</td>
                       <td>{admin.department || '—'}</td>
-                      <td>{admin.is_active ? 'Active' : 'Inactive'}</td>
+                      <td>
+                        <span className={`status-badge ${admin.is_active ? 'status-badge--active' : 'status-badge--inactive'}`}>
+                          {admin.is_active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -105,6 +88,6 @@ export default function AdminDashboard() {
           </div>
         </article>
       </section>
-    </DashboardLayout>
+    </>
   )
 }
