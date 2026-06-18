@@ -20,8 +20,18 @@ export async function listAdminPatients(params) {
   return unwrap(res)
 }
 
+export async function getAdminPatient(id) {
+  const res = await api.get(`/admin/patients/${id}/`)
+  return unwrap(res)
+}
+
 export async function togglePatientActive(id) {
   const res = await api.post(`/admin/patients/${id}/toggle-active/`)
+  return unwrap(res)
+}
+
+export async function deletePatient(id) {
+  const res = await api.delete(`/admin/patients/${id}/`)
   return unwrap(res)
 }
 
@@ -37,6 +47,16 @@ export async function cancelAdminAppointment(id) {
 
 export async function listDoctors(params) {
   const res = await api.get('/doctors/', { params })
+  return unwrap(res)
+}
+
+export async function createDoctor(payload) {
+  const res = await api.post('/doctors/', payload)
+  return unwrap(res)
+}
+
+export async function deleteDoctor(id) {
+  const res = await api.delete(`/doctors/${id}/`)
   return unwrap(res)
 }
 
