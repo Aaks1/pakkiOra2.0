@@ -7,7 +7,7 @@ export const NAV_LINKS = [
 
 export const HERO_SLIDES = [
   {
-    image: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?auto=format&fit=crop&w=1400&q=80',
+    image: 'https://unsplash.com/photos/man-wearing-medical-mask-and-robe-UIp163xCV6wE',
     headline: 'Book Appointments in Seconds',
     description: 'Find healthcare providers and schedule appointments instantly.',
   },

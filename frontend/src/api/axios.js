@@ -1,7 +1,9 @@
 import axios from 'axios'
 import { getAccessToken, getRefreshToken, setTokens, clearAuth } from '../utils/storage'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api/v1'
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? '/api/v1' : 'http://127.0.0.1:8000/api/v1')
 
 const api = axios.create({
   baseURL: API_URL,
@@ -60,6 +62,11 @@ export function getErrorMessage(error) {
     }
   }
   if (data?.detail) return String(data.detail)
+  if (!error.response) {
+    if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+      return 'Cannot reach the server. Start the backend with: python manage.py runserver (port 8000), then refresh.'
+    }
+  }
   return error.message || 'Something went wrong'
 }
 

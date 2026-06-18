@@ -3,7 +3,11 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Landing from './pages/Landing'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
-import PatientDashboard from './pages/dashboard/PatientDashboard'
+import PatientLayout from './components/patient/PatientLayout'
+import PatientOverview from './pages/patient/PatientOverview'
+import PatientBook from './pages/patient/PatientBook'
+import PatientAppointments from './pages/patient/PatientAppointments'
+import PatientProfile from './pages/patient/PatientProfile'
 import AdminLayout from './components/admin/AdminLayout'
 import AdminOverview from './pages/admin/AdminOverview'
 import AdminPatients from './pages/admin/AdminPatients'
@@ -16,7 +20,7 @@ function ProtectedRoute({ children, requireAdmin = false }) {
   const { isAuthenticated, isAdmin } = useAuth()
 
   if (!isAuthenticated) return <Navigate to="/login" replace />
-  if (requireAdmin && !isAdmin) return <Navigate to="/patient" replace />
+  if (requireAdmin && !isAdmin) return <Navigate to="/patient/dashboard" replace />
   if (!requireAdmin && isAdmin) return <Navigate to="/admin/dashboard" replace />
 
   return children
@@ -26,7 +30,7 @@ function AuthOnlyRoute({ children }) {
   const { isAuthenticated, isAdmin } = useAuth()
 
   if (isAuthenticated) {
-    return <Navigate to={isAdmin ? '/admin/dashboard' : '/patient'} replace />
+    return <Navigate to={isAdmin ? '/admin/dashboard' : '/patient/dashboard'} replace />
   }
 
   return children
@@ -44,10 +48,16 @@ export default function App() {
             path="/patient"
             element={(
               <ProtectedRoute>
-                <PatientDashboard />
+                <PatientLayout />
               </ProtectedRoute>
             )}
-          />
+          >
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<PatientOverview />} />
+            <Route path="book" element={<PatientBook />} />
+            <Route path="appointments" element={<PatientAppointments />} />
+            <Route path="profile" element={<PatientProfile />} />
+          </Route>
           <Route
             path="/admin"
             element={(
