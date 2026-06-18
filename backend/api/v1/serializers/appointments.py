@@ -1,9 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from rest_framework import serializers
 
 from appointments.models import Appointment
+from doctors.models import Doctor
 from api.v1.serializers.doctors import DoctorSerializer
+from appointments.services.slot_service import SLOT_DURATION_MINUTES
 
 
 class AppointmentSerializer(serializers.ModelSerializer):
@@ -50,13 +52,21 @@ class AppointmentUpdateSerializer(serializers.Serializer):
 
 
 class AdminAppointmentUpdateSerializer(serializers.ModelSerializer):
+    doctor = serializers.PrimaryKeyRelatedField(queryset=Doctor.objects.all(), required=False)
+
     class Meta:
         model = Appointment
-        fields = ["date", "start_time", "end_time", "status", "symptoms", "notes"]
+        fields = ["doctor", "date", "start_time", "end_time", "status", "symptoms", "notes"]
 
     def validate(self, attrs):
         start_time = attrs.get("start_time", getattr(self.instance, "start_time", None))
         end_time = attrs.get("end_time", getattr(self.instance, "end_time", None))
+        if start_time and not end_time:
+            appointment_date = attrs.get("date", self.instance.date)
+            end_time = (
+                datetime.combine(appointment_date, start_time) + timedelta(minutes=SLOT_DURATION_MINUTES)
+            ).time()
+            attrs["end_time"] = end_time
         if start_time and end_time and end_time <= start_time:
             raise serializers.ValidationError("End time must be later than start time.")
         return attrs

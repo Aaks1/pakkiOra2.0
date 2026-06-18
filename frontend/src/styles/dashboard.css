@@ -384,6 +384,148 @@
   color: var(--gray-800);
 }
 
+.admin-modal__panel--wide {
+  width: min(100%, 52rem);
+}
+
+.admin-toolbar__controls--filters {
+  align-items: flex-end;
+}
+
+.admin-filter-field {
+  min-width: 10rem;
+  margin-bottom: 0;
+}
+
+.doctor-appointments-section {
+  margin-top: 0.25rem;
+}
+
+.slot-override {
+  border: 1px solid var(--gray-200);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.slot-override__title {
+  margin: 0 0 0.35rem;
+  font-size: 0.9375rem;
+}
+
+.slot-override__grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .slot-override__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .slot-override__notes {
+    grid-column: 1 / -1;
+  }
+}
+
+.slot-override-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.slot-override-list__item {
+  font-size: 0.8125rem;
+  color: var(--gray-700);
+}
+
+.slot-preview {
+  border: 1px dashed var(--gray-300);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.slot-preview__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.slot-chip {
+  display: inline-flex;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.slot-chip--available {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.slot-chip--booked {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.slot-chip--cancelled {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.slot-chip--disabled {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.slot-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.quick-actions {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.quick-actions__link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--gray-200);
+  border-radius: 0.75rem;
+  text-decoration: none;
+  color: var(--gray-700);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.quick-actions__link:hover {
+  border-color: var(--primary-200);
+  background: var(--primary-50);
+  color: var(--primary-700);
+}
+
+.quick-actions__link i {
+  color: var(--primary-500);
+  width: 1.125rem;
+  text-align: center;
+}
+
+.dashboard-form__actions--row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .dashboard-input {
   width: 100%;
   border: 1px solid var(--gray-300);

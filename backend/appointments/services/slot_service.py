@@ -14,31 +14,68 @@ DEFAULT_END = "17:00"
 class SlotService:
     """Parse doctor slot configuration and compute bookable times."""
 
-    @staticmethod
-    def parse_doctor_time_slots(doctor: Doctor, selected_date: date) -> list[dict[str, Any]]:
+    @classmethod
+    def _append_slot(
+        cls,
+        parsed_slots: list[dict[str, Any]],
+        selected_date: date,
+        start_time,
+        end_time,
+    ) -> None:
+        parsed_slots.append(
+            {
+                "start_time": start_time,
+                "end_time": end_time,
+                "start_str": datetime.combine(selected_date, start_time).strftime("%I:%M %p"),
+                "end_str": datetime.combine(selected_date, end_time).strftime("%I:%M %p"),
+            }
+        )
+
+    @classmethod
+    def _parse_time_range(
+        cls,
+        parsed_slots: list[dict[str, Any]],
+        selected_date: date,
+        range_start,
+        range_end,
+    ) -> None:
+        current = datetime.combine(selected_date, range_start)
+        end_dt = datetime.combine(selected_date, range_end)
+        while current + timedelta(minutes=SLOT_DURATION_MINUTES) <= end_dt:
+            slot_end = current + timedelta(minutes=SLOT_DURATION_MINUTES)
+            cls._append_slot(parsed_slots, selected_date, current.time(), slot_end.time())
+            current = slot_end
+
+    @classmethod
+    def parse_doctor_time_slots(cls, doctor: Doctor, selected_date: date) -> list[dict[str, Any]]:
         raw_slots = [s.strip() for s in (doctor.time_slots or "").split(",") if s.strip()]
         parsed_slots = []
+
         for slot in raw_slots:
+            if "-" in slot:
+                parts = [part.strip() for part in slot.split("-", 1)]
+                if len(parts) != 2:
+                    continue
+                try:
+                    range_start = datetime.strptime(parts[0], "%H:%M").time()
+                    range_end = datetime.strptime(parts[1], "%H:%M").time()
+                    if range_end <= range_start:
+                        continue
+                    cls._parse_time_range(parsed_slots, selected_date, range_start, range_end)
+                except ValueError:
+                    continue
+                continue
+
             try:
                 start_time = datetime.strptime(slot, "%H:%M").time()
                 end_time = (
                     datetime.combine(selected_date, start_time)
                     + timedelta(minutes=SLOT_DURATION_MINUTES)
                 ).time()
-                parsed_slots.append(
-                    {
-                        "start_time": start_time,
-                        "end_time": end_time,
-                        "start_str": datetime.combine(selected_date, start_time).strftime(
-                            "%I:%M %p"
-                        ),
-                        "end_str": datetime.combine(selected_date, end_time).strftime(
-                            "%I:%M %p"
-                        ),
-                    }
-                )
+                cls._append_slot(parsed_slots, selected_date, start_time, end_time)
             except ValueError:
                 continue
+
         return parsed_slots
 
     @staticmethod

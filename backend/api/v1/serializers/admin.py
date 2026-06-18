@@ -91,6 +91,8 @@ class AdminUserSerializer(serializers.ModelSerializer):
 class PatientAccountSerializer(serializers.ModelSerializer):
     has_patient_profile = serializers.SerializerMethodField()
     appointment_count = serializers.SerializerMethodField()
+    phone = serializers.SerializerMethodField()
+    registration_date = serializers.DateTimeField(source="date_joined", read_only=True)
 
     class Meta:
         model = User
@@ -100,12 +102,27 @@ class PatientAccountSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "email",
+            "phone",
             "is_active",
             "date_joined",
+            "registration_date",
             "has_patient_profile",
             "appointment_count",
         ]
-        read_only_fields = ["id", "username", "date_joined", "has_patient_profile", "appointment_count"]
+        read_only_fields = [
+            "id",
+            "username",
+            "date_joined",
+            "registration_date",
+            "has_patient_profile",
+            "appointment_count",
+            "phone",
+        ]
+
+    def get_phone(self, obj) -> str:
+        if hasattr(obj, "patient_profile"):
+            return obj.patient_profile.phone or ""
+        return ""
 
     def get_has_patient_profile(self, obj) -> bool:
         return hasattr(obj, "patient_profile")
@@ -114,6 +131,14 @@ class PatientAccountSerializer(serializers.ModelSerializer):
         if hasattr(obj, "patient_profile"):
             return obj.appointments.count()
         return 0
+
+
+class AdminPatientUpdateSerializer(serializers.Serializer):
+    first_name = serializers.CharField(required=False)
+    last_name = serializers.CharField(required=False)
+    email = serializers.EmailField(required=False)
+    is_active = serializers.BooleanField(required=False)
+    phone = serializers.CharField(required=False, allow_blank=True)
 
 
 class DashboardStatsSerializer(serializers.Serializer):

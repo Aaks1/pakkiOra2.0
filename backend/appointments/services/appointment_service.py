@@ -151,6 +151,79 @@ class AppointmentService:
             appointment.save(update_fields=["date", "start_time", "end_time", "updated_at"])
             return appointment
 
+    @classmethod
+    def admin_update(
+        cls,
+        appointment: Appointment,
+        *,
+        doctor: Doctor | None = None,
+        appointment_date: date | None = None,
+        start_time: time | None = None,
+        status: str | None = None,
+        notes: str | None = None,
+        symptoms: str | None = None,
+    ) -> Appointment:
+        target_doctor = doctor or appointment.doctor
+        target_date = appointment_date or appointment.date
+        target_start = start_time or appointment.start_time
+
+        schedule_changed = (
+            doctor is not None
+            or appointment_date is not None
+            or start_time is not None
+        )
+
+        if schedule_changed and appointment.status == "BOOKED":
+            cls._validate_future_date(target_date)
+            if not AvailabilityService.is_doctor_available_on_date(target_doctor, target_date):
+                raise ServiceError("Doctor is not available on the selected date.")
+            cls._validate_slot_available(
+                target_doctor,
+                target_date,
+                target_start,
+                exclude_appointment_id=appointment.id,
+            )
+
+        end_time = (
+            datetime.combine(target_date, target_start) + timedelta(minutes=SLOT_DURATION_MINUTES)
+        ).time()
+
+        with transaction.atomic():
+            if schedule_changed and appointment.status == "BOOKED":
+                conflict = (
+                    Appointment.objects.select_for_update()
+                    .filter(
+                        doctor=target_doctor,
+                        date=target_date,
+                        start_time=target_start,
+                        status="BOOKED",
+                    )
+                    .exclude(id=appointment.id)
+                    .exists()
+                )
+                if conflict:
+                    raise ServiceError("This slot is already booked. Please choose another slot.")
+
+            if doctor is not None:
+                appointment.doctor = target_doctor
+            if appointment_date is not None:
+                appointment.date = target_date
+            if start_time is not None:
+                appointment.start_time = target_start
+                appointment.end_time = end_time
+            if status is not None:
+                valid = {choice[0] for choice in Appointment.STATUS_CHOICES}
+                if status not in valid:
+                    raise ServiceError(f"Invalid status. Must be one of: {', '.join(sorted(valid))}")
+                appointment.status = status
+            if notes is not None:
+                appointment.notes = notes
+            if symptoms is not None:
+                appointment.symptoms = symptoms
+
+            appointment.save()
+        return appointment
+
     @staticmethod
     def cancel(appointment: Appointment) -> Appointment:
         if appointment.status != "BOOKED":

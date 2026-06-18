@@ -15,6 +15,7 @@ from api.v1.serializers.doctors import (
     DoctorSlotConfigSerializer,
     DoctorWriteSerializer,
 )
+from appointments.models import Appointment
 from appointments.services import AvailabilityService, SlotService
 from doctors.models import Doctor, DoctorAvailability
 
@@ -44,7 +45,15 @@ class DoctorViewSet(viewsets.ModelViewSet):
     ordering = ["first_name", "last_name"]
 
     def get_permissions(self):
-        if self.action in ("create", "update", "partial_update", "destroy", "slots", "toggle_active"):
+        if self.action in (
+            "create",
+            "update",
+            "partial_update",
+            "destroy",
+            "toggle_active",
+            "slot_config",
+            "slot_overview",
+        ):
             return [IsAdminUser()]
         return [IsAuthenticated()]
 
@@ -83,6 +92,17 @@ class DoctorViewSet(viewsets.ModelViewSet):
         return success_response(data=response.data, message="Doctor updated successfully")
 
     def destroy(self, request, *args, **kwargs):
+        doctor = self.get_object()
+        today = timezone.now().date()
+        if Appointment.objects.filter(
+            doctor=doctor,
+            date__gte=today,
+            status="BOOKED",
+        ).exists():
+            from api.exceptions import ServiceError
+            raise ServiceError(
+                "Cannot delete doctor with future booked appointments. Cancel or reassign them first."
+            )
         super().destroy(request, *args, **kwargs)
         return success_response(message="Doctor deleted successfully")
 
@@ -127,6 +147,52 @@ class DoctorViewSet(viewsets.ModelViewSet):
                 "slots": SlotService.serialize_slots(slots),
             },
         )
+
+    @extend_schema(tags=["Admin - Doctors"])
+    @action(detail=True, methods=["get"], url_path="slot-overview")
+    def slot_overview(self, request, pk=None):
+        """All slots for a date with available, booked, or cancelled status."""
+        doctor = self.get_object()
+        date_str = request.query_params.get("date")
+        if not date_str:
+            return success_response(data={"slots": []}, message="Provide date (YYYY-MM-DD).")
+        try:
+            selected_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            return success_response(data={"slots": []}, message="Invalid date format.")
+
+        day_available = AvailabilityService.is_doctor_available_on_date(doctor, selected_date)
+        generated = SlotService.parse_doctor_time_slots(
+            doctor, selected_date
+        ) or SlotService.generate_default_time_slots(selected_date)
+
+        appointments = {
+            appt.start_time: appt
+            for appt in Appointment.objects.filter(doctor=doctor, date=selected_date).select_related(
+                "patient"
+            )
+        }
+
+        overview = []
+        for slot in generated:
+            serialized = SlotService.serialize_slots([slot])[0]
+            appt = appointments.get(slot["start_time"])
+            if appt and appt.status == "BOOKED":
+                serialized["slot_status"] = "booked"
+                serialized["appointment_id"] = appt.id
+                serialized["patient_name"] = (
+                    appt.patient.get_full_name() or appt.patient.username
+                )
+            elif appt and appt.status == "CANCELLED":
+                serialized["slot_status"] = "cancelled"
+                serialized["appointment_id"] = appt.id
+            elif day_available:
+                serialized["slot_status"] = "available"
+            else:
+                serialized["slot_status"] = "disabled"
+            overview.append(serialized)
+
+        return success_response(data={"date": date_str, "slots": overview})
 
     @extend_schema(request=DoctorSlotConfigSerializer, tags=["Admin - Doctors"])
     @action(detail=True, methods=["get", "patch"], url_path="slot-config")

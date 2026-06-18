@@ -20,7 +20,7 @@ export const DOCTOR_INITIAL = {
   department: '',
   address: '',
   bio: '',
-  time_slots: '',
+  time_slots: '09:00-17:00',
   available_days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
   is_active: true,
 }
@@ -73,4 +73,26 @@ export function validateDoctorForm(form) {
 
 export function toggleDoctorDay(days, day) {
   return days.includes(day) ? days.filter((d) => d !== day) : [...days, day]
+}
+
+export function doctorToForm(doctor) {
+  if (!doctor) return { ...DOCTOR_INITIAL }
+  return {
+    first_name: doctor.first_name || '',
+    last_name: doctor.last_name || '',
+    email: doctor.email || '',
+    phone: doctor.phone || '',
+    specialization: doctor.specialization || '',
+    qualification: doctor.qualification || '',
+    license_number: doctor.license_number || '',
+    experience_years: doctor.experience_years ?? '',
+    department: doctor.department || '',
+    address: doctor.address || '',
+    bio: doctor.bio || '',
+    time_slots: doctor.time_slots || '09:00-17:00',
+    available_days: doctor.available_days?.length
+      ? doctor.available_days
+      : ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
+    is_active: doctor.is_active !== false,
+  }
 }

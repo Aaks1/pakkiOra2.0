@@ -10,6 +10,7 @@ import AdminPatients from './pages/admin/AdminPatients'
 import AdminStaff from './pages/admin/AdminStaff'
 import AdminAppointments from './pages/admin/AdminAppointments'
 import AdminDoctors from './pages/admin/AdminDoctors'
+import AdminSlots from './pages/admin/AdminSlots'
 
 function ProtectedRoute({ children, requireAdmin = false }) {
   const { isAuthenticated, isAdmin } = useAuth()
@@ -62,6 +63,7 @@ export default function App() {
             <Route path="admins" element={<AdminStaff />} />
             <Route path="appointments" element={<AdminAppointments />} />
             <Route path="doctors" element={<AdminDoctors />} />
+            <Route path="slots" element={<AdminSlots />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

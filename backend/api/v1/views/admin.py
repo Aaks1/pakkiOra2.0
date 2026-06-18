@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from api.permissions import IsAdminUser
 from api.responses import success_response
 from api.v1.serializers.admin import (
+    AdminPatientUpdateSerializer,
     AdminUserSerializer,
     DashboardStatsSerializer,
     PatientAccountSerializer,
@@ -109,9 +110,15 @@ class AdminPatientViewSet(
     """Manage patient accounts."""
     permission_classes = [IsAdminUser]
     serializer_class = PatientAccountSerializer
-    queryset = User.objects.filter(is_staff=False).order_by("-date_joined")
+    queryset = User.objects.filter(is_staff=False).select_related("patient_profile").order_by("-date_joined")
     filterset_class = PatientFilter
-    search_fields = ["username", "first_name", "last_name", "email"]
+    search_fields = [
+        "username",
+        "first_name",
+        "last_name",
+        "email",
+        "patient_profile__phone",
+    ]
     ordering_fields = ["date_joined", "username"]
     http_method_names = ["get", "patch", "delete", "post", "head", "options"]
 
@@ -140,8 +147,26 @@ class AdminPatientViewSet(
         return success_response(data=data)
 
     def partial_update(self, request, *args, **kwargs):
-        response = super().partial_update(request, *args, **kwargs)
-        return success_response(data=response.data, message="Patient account updated successfully")
+        user = self.get_object()
+        serializer = AdminPatientUpdateSerializer(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        for field in ("first_name", "last_name", "email", "is_active"):
+            if field in data:
+                setattr(user, field, data[field])
+        user.save()
+
+        phone = data.get("phone")
+        if phone is not None and hasattr(user, "patient_profile"):
+            profile = user.patient_profile
+            profile.phone = phone
+            profile.save(update_fields=["phone", "updated_at"])
+
+        return success_response(
+            data=PatientAccountSerializer(user).data,
+            message="Patient account updated successfully",
+        )
 
     def destroy(self, request, *args, **kwargs):
         super().destroy(request, *args, **kwargs)
@@ -195,23 +220,19 @@ class AdminAppointmentViewSet(
         appointment = self.get_object()
         serializer = AdminAppointmentUpdateSerializer(appointment, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
 
-        candidate = serializer.save()
-        if (
-            Appointment.objects.filter(
-                doctor=candidate.doctor,
-                date=candidate.date,
-                start_time=candidate.start_time,
-                status="BOOKED",
-            )
-            .exclude(id=appointment.id)
-            .exists()
-        ):
-            from api.exceptions import ServiceError
-            raise ServiceError("This doctor already has a booked appointment at that time.")
-
+        updated = AppointmentService.admin_update(
+            appointment,
+            doctor=data.get("doctor"),
+            appointment_date=data.get("date"),
+            start_time=data.get("start_time"),
+            status=data.get("status"),
+            notes=data.get("notes"),
+            symptoms=data.get("symptoms"),
+        )
         return success_response(
-            data=AppointmentSerializer(candidate).data,
+            data=AppointmentSerializer(updated).data,
             message="Appointment updated successfully",
         )
 

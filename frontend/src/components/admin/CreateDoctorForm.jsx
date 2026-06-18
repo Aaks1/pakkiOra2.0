@@ -129,7 +129,7 @@ export default function CreateDoctorForm({ onCreated }) {
         <Input
           label="Time slots"
           name="time_slots"
-          hint="e.g. 09:00-12:00, 14:00-17:00"
+          hint="Comma-separated single times or ranges (30 min slots), e.g. 09:00-12:00, 14:00-17:00"
           value={form.time_slots}
           onChange={setField('time_slots')}
         />
@@ -153,7 +153,7 @@ export default function CreateDoctorForm({ onCreated }) {
         />
 
         <fieldset className="dashboard-form__full day-picker">
-          <legend className="day-picker__legend">Available days</legend>
+          <legend className="day-picker__legend">Consultation schedule — available days</legend>
           <div className="day-picker__grid">
             {DOCTOR_DAYS.map((day) => (
               <label key={day.value} className="day-picker__item">

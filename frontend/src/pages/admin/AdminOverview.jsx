@@ -1,7 +1,16 @@
+import { Link } from 'react-router-dom'
 import { useCallback, useEffect, useState } from 'react'
 import AdminPageHeader from '../../components/admin/AdminPageHeader'
 import { getAdminStats } from '../../api/admin'
 import { getErrorMessage } from '../../api/axios'
+
+const QUICK_ACTIONS = [
+  { to: '/admin/doctors', label: 'Add / manage doctors', icon: 'fa-user-doctor' },
+  { to: '/admin/slots', label: 'Manage slots', icon: 'fa-clock' },
+  { to: '/admin/appointments', label: 'View appointments', icon: 'fa-calendar-check' },
+  { to: '/admin/admins', label: 'Manage admins', icon: 'fa-user-shield' },
+  { to: '/admin/patients', label: 'View patients', icon: 'fa-user-injured' },
+]
 
 export default function AdminOverview() {
   const [stats, setStats] = useState(null)
@@ -26,12 +35,11 @@ export default function AdminOverview() {
   }, [loadStats])
 
   const statCards = [
+    { label: 'Total doctors', value: stats?.total_doctors, icon: 'fa-user-doctor' },
     { label: 'Total patients', value: stats?.total_users, icon: 'fa-users' },
-    { label: 'Total admins', value: stats?.total_admins, icon: 'fa-user-shield' },
-    { label: 'Active doctors', value: stats?.active_doctors, icon: 'fa-user-doctor' },
-    { label: 'Appointments today', value: stats?.todays_appointments, icon: 'fa-calendar-day' },
     { label: 'Total appointments', value: stats?.total_appointments, icon: 'fa-calendar-check' },
-    { label: 'Booked', value: stats?.booked_appointments, icon: 'fa-clock' },
+    { label: "Today's appointments", value: stats?.todays_appointments, icon: 'fa-calendar-day' },
+    { label: 'Booked (upcoming)', value: stats?.booked_appointments, icon: 'fa-clock' },
     { label: 'Completed', value: stats?.completed_appointments, icon: 'fa-circle-check' },
     { label: 'Cancelled', value: stats?.cancelled_appointments, icon: 'fa-ban' },
   ]
@@ -39,15 +47,15 @@ export default function AdminOverview() {
   return (
     <>
       <AdminPageHeader
-        title="Dashboard"
-        subtitle="Overview of clinic operations and key metrics."
+        title="Administrator Dashboard"
+        subtitle="Manage doctors, slots, appointments, and patients from this custom admin panel."
       />
 
       {error ? <p className="dashboard-feedback dashboard-feedback--error">{error}</p> : null}
 
       <section className="dashboard-grid">
         <article className="dashboard-card dashboard-card--span">
-          <h2 className="dashboard-card__title">Overview</h2>
+          <h2 className="dashboard-card__title">Summary statistics</h2>
           <div className="dashboard-stats dashboard-stats--overview">
             {statCards.map((stat) => (
               <div key={stat.label} className="dashboard-stat dashboard-stat--with-icon">
@@ -55,6 +63,18 @@ export default function AdminOverview() {
                 <p className="dashboard-stat__value">{loading ? '…' : (stat.value ?? '—')}</p>
                 <p className="dashboard-stat__label">{stat.label}</p>
               </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="dashboard-card">
+          <h2 className="dashboard-card__title">Quick actions</h2>
+          <div className="quick-actions">
+            {QUICK_ACTIONS.map((action) => (
+              <Link key={action.to} to={action.to} className="quick-actions__link">
+                <i className={`fas ${action.icon}`} aria-hidden="true" />
+                {action.label}
+              </Link>
             ))}
           </div>
         </article>
