@@ -3,7 +3,6 @@ import AdminModal from './AdminModal'
 import AdminDayPicker from './AdminDayPicker'
 import AdminField, { inputClass } from './AdminField'
 import AdminSpecializationSelect from './AdminSpecializationSelect'
-import CloudinaryPhotoField from '../ui/CloudinaryPhotoField'
 import { buildDoctorPayload, doctorToForm, validateDoctorForm } from '../../utils/doctorForm'
 import { updateDoctor } from '../../api/admin'
 import { getErrorMessage } from '../../api/axios'
@@ -108,13 +107,6 @@ export default function EditDoctorModal({ doctor, open, onClose, onSaved }) {
         <AdminField label="Bio" className="sm:col-span-2">
           <textarea className={inputClass} rows={3} value={form.bio} onChange={setField('bio')} />
         </AdminField>
-        <div className="sm:col-span-2">
-          <CloudinaryPhotoField
-            value={form.photo_url}
-            onChange={(photo_url) => setForm((prev) => ({ ...prev, photo_url }))}
-            initials={`${form.first_name?.[0] || ''}${form.last_name?.[0] || ''}`.toUpperCase() || 'DR'}
-          />
-        </div>
         <AdminField label="Status">
           <select
             className={inputClass}

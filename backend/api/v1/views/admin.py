@@ -168,9 +168,6 @@ class AdminPatientViewSet(
             if "phone" in data:
                 profile.phone = data["phone"]
                 profile_updates.append("phone")
-            if "photo_url" in data:
-                profile.photo_url = data["photo_url"] or None
-                profile_updates.append("photo_url")
             if profile_updates:
                 profile.save(update_fields=profile_updates)
 

@@ -62,7 +62,6 @@ export default function PatientDetailModal({ patientId, open, onClose }) {
         <div className="space-y-6">
           <div className="flex items-center gap-4 border-b border-slate-100 pb-6">
             <ProfileAvatar
-              photoUrl={profile?.photo_url}
               initials={patientInitials(detail)}
               size="2xl"
             />

@@ -4,7 +4,7 @@ import Button from '../ui/Button'
 import Input from '../ui/Input'
 import Select from '../ui/Select'
 import Textarea from '../ui/Textarea'
-import CloudinaryPhotoField from '../ui/CloudinaryPhotoField'
+import ProfileAvatar from '../ui/ProfileAvatar'
 import PageLoader from './PageLoader'
 import { useAuth } from '../../context/AuthContext'
 import { getErrorMessage } from '../../api/axios'
@@ -42,12 +42,10 @@ export default function PatientProfile() {
         address: data.address || '',
         allergies: data.allergies || '',
         medical_history: data.medical_history || '',
-        photo_url: data.photo_url || '',
       })
       updateUser({
         first_name: data.first_name || '',
         last_name: data.last_name || '',
-        photo_url: data.photo_url || '',
       })
     } catch (err) {
       setError(getErrorMessage(err))
@@ -72,7 +70,6 @@ export default function PatientProfile() {
       updateUser({
         first_name: form.first_name,
         last_name: form.last_name,
-        photo_url: form.photo_url || '',
       })
       setSuccess('Profile updated successfully.')
     } catch (err) {
@@ -109,21 +106,11 @@ export default function PatientProfile() {
     <div className="mx-auto max-w-2xl space-y-8">
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-r from-blue-50/80 to-teal-50/50 p-6">
         <div className="flex flex-wrap items-center gap-4">
-          <CloudinaryPhotoField
-            value={form.photo_url}
-            onChange={(photo_url) => {
-              setForm((prev) => ({ ...prev, photo_url }))
-              updateUser({ photo_url })
-            }}
-            initials={patientInitials(form)}
-            size="2xl"
-            showLabel={false}
-          />
+          <ProfileAvatar initials={patientInitials(form)} size="2xl" />
           <div className="min-w-0">
             <h1 className="text-xl font-semibold text-slate-800">{patientDisplayName(form)}</h1>
             <p className="mt-1 text-sm text-slate-600">{form.email}</p>
             {form.phone ? <p className="mt-0.5 text-sm text-slate-500">{form.phone}</p> : null}
-            <p className="mt-2 text-xs text-slate-500">Click photo to change</p>
           </div>
         </div>
       </section>

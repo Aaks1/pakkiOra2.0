@@ -86,7 +86,6 @@ export default function AdminPatients() {
       header: 'Patient',
       render: (r) => (
         <AdminPersonCell
-          photoUrl={r.photo_url}
           name={patientDisplayName(r) || r.username || '—'}
           subtitle={r.username}
           initials={patientInitials(r)}

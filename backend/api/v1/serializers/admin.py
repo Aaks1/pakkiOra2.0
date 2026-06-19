@@ -92,7 +92,6 @@ class PatientAccountSerializer(serializers.ModelSerializer):
     has_patient_profile = serializers.SerializerMethodField()
     appointment_count = serializers.SerializerMethodField()
     phone = serializers.SerializerMethodField()
-    photo_url = serializers.SerializerMethodField()
     registration_date = serializers.DateTimeField(source="date_joined", read_only=True)
 
     class Meta:
@@ -104,7 +103,6 @@ class PatientAccountSerializer(serializers.ModelSerializer):
             "last_name",
             "email",
             "phone",
-            "photo_url",
             "is_active",
             "date_joined",
             "registration_date",
@@ -119,17 +117,11 @@ class PatientAccountSerializer(serializers.ModelSerializer):
             "has_patient_profile",
             "appointment_count",
             "phone",
-            "photo_url",
         ]
 
     def get_phone(self, obj) -> str:
         if hasattr(obj, "patient_profile"):
             return obj.patient_profile.phone or ""
-        return ""
-
-    def get_photo_url(self, obj) -> str:
-        if hasattr(obj, "patient_profile"):
-            return obj.patient_profile.photo_url or ""
         return ""
 
     def get_has_patient_profile(self, obj) -> bool:
@@ -147,7 +139,6 @@ class AdminPatientUpdateSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     is_active = serializers.BooleanField(required=False)
     phone = serializers.CharField(required=False, allow_blank=True)
-    photo_url = serializers.URLField(required=False, allow_blank=True, allow_null=True)
 
 
 class DashboardStatsSerializer(serializers.Serializer):

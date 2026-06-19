@@ -92,7 +92,6 @@ export default function AdminDoctors() {
       header: 'Doctor',
       render: (r) => (
         <AdminPersonCell
-          photoUrl={r.photo_url}
           name={doctorName(r)}
           initials={doctorInitials(r)}
         />

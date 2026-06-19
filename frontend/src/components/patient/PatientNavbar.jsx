@@ -39,7 +39,6 @@ export default function PatientNavbar() {
             title={user?.first_name || user?.username || 'Profile'}
           >
             <ProfileAvatar
-              photoUrl={user?.photo_url}
               initials={patientInitials(user)}
               size="sm"
             />

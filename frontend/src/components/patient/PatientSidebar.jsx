@@ -64,7 +64,6 @@ function SidebarInner({ onNavigate }) {
       <div className="border-t border-slate-200 p-4">
         <div className="flex items-center gap-3 px-1">
           <ProfileAvatar
-            photoUrl={user?.photo_url}
             initials={patientInitials(user)}
             size="sm"
           />
