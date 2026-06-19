@@ -16,6 +16,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dev-only-key")
 DEBUG = os.getenv("DEBUG", "True") == "True"
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+_render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+if _render_host and _render_host not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_render_host)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -93,6 +96,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOWED_ORIGINS = [

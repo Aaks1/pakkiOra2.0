@@ -91,8 +91,22 @@ export default function AdminDoctors() {
       render: (r) => r.full_name || `Dr. ${r.first_name} ${r.last_name}`,
     },
     { key: 'specialization', header: 'Specialization', render: (r) => r.specialization || '—' },
-    { key: 'email', header: 'Email', render: (r) => r.email || '—' },
-    { key: 'phone', header: 'Phone', render: (r) => r.phone || '—' },
+    {
+      key: 'email',
+      header: 'Email',
+      cellClassName: 'admin-table__cell--email',
+      render: (r) => (
+        <span className="admin-table__truncate" title={r.email || undefined}>
+          {r.email || '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'phone',
+      header: 'Phone',
+      cellClassName: 'admin-table__cell--phone',
+      render: (r) => r.phone || '—',
+    },
     {
       key: 'status',
       header: 'Status',
@@ -101,6 +115,7 @@ export default function AdminDoctors() {
     {
       key: 'actions',
       header: 'Actions',
+      cellClassName: 'admin-table__cell--actions',
       render: (r) => (
         <AdminRowActions>
           <AdminAction onClick={() => setEditDoctor(r)}>Edit</AdminAction>

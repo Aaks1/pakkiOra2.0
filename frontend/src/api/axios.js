@@ -69,7 +69,9 @@ export function getErrorMessage(error) {
   if (data?.detail) return String(data.detail)
   if (!error.response) {
     if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
-      return 'Cannot reach the server. Start the backend with: python manage.py runserver (port 8000), then refresh.'
+      return import.meta.env.DEV
+        ? 'Cannot reach the server. Start the backend with: python manage.py runserver (port 8000), then refresh.'
+        : 'Cannot reach the server. Check that the API is running and try again in a moment.'
     }
   }
   return error.message || 'Something went wrong'

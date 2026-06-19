@@ -43,11 +43,13 @@ export default function AdminDataTable({
       transition={{ duration: 0.3 }}
     >
       <div className="overflow-x-auto">
-        <table className="admin-table w-full min-w-[640px] table-fixed">
+        <table className="admin-table w-full min-w-[960px]">
           <thead>
             <tr>
               {columns.map((col) => (
-                <th key={col.key}>{col.header}</th>
+                <th key={col.key} className={col.headerClassName}>
+                  {col.header}
+                </th>
               ))}
             </tr>
           </thead>
@@ -74,7 +76,7 @@ export default function AdminDataTable({
                   animate="visible"
                 >
                   {columns.map((col) => (
-                    <td key={col.key}>
+                    <td key={col.key} className={col.cellClassName}>
                       {col.render ? col.render(row) : row[col.key]}
                     </td>
                   ))}

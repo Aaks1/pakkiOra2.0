@@ -445,6 +445,29 @@
   padding: 0.875rem 1rem;
   font-size: 0.875rem;
   color: #334155;
+  vertical-align: top;
+}
+
+.admin-table__truncate {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-table__cell--email {
+  width: 12rem;
+  max-width: 12rem;
+}
+
+.admin-table__cell--phone {
+  width: 7.5rem;
+  max-width: 7.5rem;
+  white-space: nowrap;
+}
+
+.admin-table__cell--actions {
+  min-width: 14rem;
 }
 
 .admin-table tbody tr {
