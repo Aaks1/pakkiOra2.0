@@ -1,3 +1,5 @@
+import { Check } from 'lucide-react'
+
 export default function StepProgress({ steps, currentStep }) {
   const progress = steps.length > 1 ? (currentStep / (steps.length - 1)) * 100 : 100
 
@@ -21,7 +23,7 @@ export default function StepProgress({ steps, currentStep }) {
               aria-current={active ? 'step' : undefined}
             >
               <span className="step-progress__marker" aria-hidden="true">
-                {done ? '✓' : index + 1}
+                {done ? <Check className="h-3.5 w-3.5" strokeWidth={2.5} /> : index + 1}
               </span>
               <span className="step-progress__label">{step.label}</span>
             </li>

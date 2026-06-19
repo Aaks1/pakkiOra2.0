@@ -1,3 +1,5 @@
+import { X } from 'lucide-react'
+
 export default function Alert({ message, onClose, type = 'error' }) {
   if (!message) return null
 
@@ -6,7 +8,7 @@ export default function Alert({ message, onClose, type = 'error' }) {
       <span className="alert__text">{message}</span>
       {onClose && (
         <button type="button" className="alert__close" onClick={onClose} aria-label="Dismiss">
-          &times;
+          <X className="h-4 w-4" />
         </button>
       )}
     </div>

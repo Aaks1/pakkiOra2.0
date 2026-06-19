@@ -1,19 +1,15 @@
 import { useEffect, useState } from 'react'
-import Alert from '../ui/Alert'
-import Button from '../ui/Button'
-import Input from '../ui/Input'
-import Select from '../ui/Select'
-import {
-  DOCTOR_DAYS,
-  buildDoctorPayload,
-  doctorToForm,
-  toggleDoctorDay,
-  validateDoctorForm,
-} from '../../utils/doctorForm'
+import AdminModal from './AdminModal'
+import AdminDayPicker from './AdminDayPicker'
+import AdminField, { inputClass } from './AdminField'
+import AdminSpecializationSelect from './AdminSpecializationSelect'
+import { buildDoctorPayload, doctorToForm, validateDoctorForm } from '../../utils/doctorForm'
 import { updateDoctor } from '../../api/admin'
 import { getErrorMessage } from '../../api/axios'
 
-export default function EditDoctorModal({ doctor, onClose, onSaved }) {
+const FORM_ID = 'edit-doctor-form'
+
+export default function EditDoctorModal({ doctor, open, onClose, onSaved }) {
   const [form, setForm] = useState(doctorToForm(doctor))
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -29,13 +25,6 @@ export default function EditDoctorModal({ doctor, onClose, onSaved }) {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
-  const handleDayToggle = (day) => {
-    setForm((prev) => ({
-      ...prev,
-      available_days: toggleDoctorDay(prev.available_days, day),
-    }))
-  }
-
   const handleSubmit = async (e) => {
     e.preventDefault()
     const validationError = validateDoctorForm(form)
@@ -43,7 +32,6 @@ export default function EditDoctorModal({ doctor, onClose, onSaved }) {
       setError(validationError)
       return
     }
-
     setLoading(true)
     setError('')
     try {
@@ -60,47 +48,79 @@ export default function EditDoctorModal({ doctor, onClose, onSaved }) {
   const name = doctor.full_name || `Dr. ${doctor.first_name} ${doctor.last_name}`
 
   return (
-    <div className="admin-modal" role="dialog" aria-modal="true">
-      <button type="button" className="admin-modal__backdrop" onClick={onClose} aria-label="Close" />
-      <div className="admin-modal__panel admin-modal__panel--wide">
-        <header className="admin-modal__header">
-          <h2 className="admin-modal__title">Edit doctor — {name}</h2>
-          <button type="button" className="admin-modal__close" onClick={onClose} aria-label="Close">
-            <i className="fas fa-times" aria-hidden="true" />
+    <AdminModal
+      open={open}
+      title={`Edit doctor — ${name}`}
+      onClose={onClose}
+      formId={FORM_ID}
+      onSubmit={handleSubmit}
+      maxWidth="max-w-2xl"
+      footer={(
+        <>
+          <button type="button" onClick={onClose} className="admin-btn admin-btn--secondary">
+            Cancel
           </button>
-        </header>
-        <div className="admin-modal__body">
-          <Alert message={error} onClose={() => setError('')} />
-          <form className="dashboard-form dashboard-form--grid" onSubmit={handleSubmit} noValidate>
-            <Input label="First name" name="first_name" required value={form.first_name} onChange={setField('first_name')} />
-            <Input label="Last name" name="last_name" required value={form.last_name} onChange={setField('last_name')} />
-            <Input label="Email" name="email" type="email" required value={form.email} onChange={setField('email')} />
-            <Input label="Phone" name="phone" type="tel" required value={form.phone} onChange={setField('phone')} />
-            <Input label="Specialization" name="specialization" required value={form.specialization} onChange={setField('specialization')} />
-            <Input label="Qualification" name="qualification" required value={form.qualification} onChange={setField('qualification')} />
-            <Input label="License number" name="license_number" required value={form.license_number} onChange={setField('license_number')} />
-            <Input label="Consultation schedule (time slots)" name="time_slots" hint="e.g. 09:00-17:00" value={form.time_slots} onChange={setField('time_slots')} wrapperClassName="dashboard-form__full" />
-            <Select label="Status" name="is_active" value={form.is_active ? 'true' : 'false'} onChange={(e) => setForm((p) => ({ ...p, is_active: e.target.value === 'true' }))}>
-              <option value="true">Active</option>
-              <option value="false">Inactive</option>
-            </Select>
-            <fieldset className="dashboard-form__full day-picker">
-              <legend className="day-picker__legend">Available days</legend>
-              <div className="day-picker__grid">
-                {DOCTOR_DAYS.map((day) => (
-                  <label key={day.value} className="day-picker__item">
-                    <input type="checkbox" checked={form.available_days.includes(day.value)} onChange={() => handleDayToggle(day.value)} />
-                    <span>{day.label}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            <div className="dashboard-form__actions">
-              <Button type="submit" variant="primary" loading={loading}>Save changes</Button>
-            </div>
-          </form>
-        </div>
+          <button type="submit" form={FORM_ID} disabled={loading} className="admin-btn admin-btn--primary">
+            {loading ? 'Saving…' : 'Save changes'}
+          </button>
+        </>
+      )}
+    >
+      {error ? <p className="mb-4 text-sm text-red-600">{error}</p> : null}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <AdminField label="First name">
+          <input className={inputClass} value={form.first_name} onChange={setField('first_name')} required />
+        </AdminField>
+        <AdminField label="Last name">
+          <input className={inputClass} value={form.last_name} onChange={setField('last_name')} required />
+        </AdminField>
+        <AdminField label="Email">
+          <input className={inputClass} type="email" value={form.email} onChange={setField('email')} required />
+        </AdminField>
+        <AdminField label="Phone">
+          <input className={inputClass} type="tel" value={form.phone} onChange={setField('phone')} required />
+        </AdminField>
+        <AdminField label="Specialization">
+          <AdminSpecializationSelect
+            value={form.specialization}
+            onChange={(specialization) => setForm((prev) => ({ ...prev, specialization }))}
+          />
+        </AdminField>
+        <AdminField label="Qualification">
+          <input className={inputClass} value={form.qualification} onChange={setField('qualification')} required />
+        </AdminField>
+        <AdminField label="License number">
+          <input className={inputClass} value={form.license_number} onChange={setField('license_number')} required />
+        </AdminField>
+        <AdminField label="Experience (years)">
+          <input className={inputClass} type="number" min="0" value={form.experience_years} onChange={setField('experience_years')} />
+        </AdminField>
+        <AdminField label="Department">
+          <input className={inputClass} value={form.department} onChange={setField('department')} />
+        </AdminField>
+        <AdminField label="Time slots" className="sm:col-span-2">
+          <input className={inputClass} value={form.time_slots} onChange={setField('time_slots')} />
+        </AdminField>
+        <AdminField label="Address" className="sm:col-span-2">
+          <textarea className={inputClass} rows={2} value={form.address} onChange={setField('address')} />
+        </AdminField>
+        <AdminField label="Bio" className="sm:col-span-2">
+          <textarea className={inputClass} rows={3} value={form.bio} onChange={setField('bio')} />
+        </AdminField>
+        <AdminField label="Status">
+          <select
+            className={inputClass}
+            value={form.is_active ? 'true' : 'false'}
+            onChange={(e) => setForm((p) => ({ ...p, is_active: e.target.value === 'true' }))}
+          >
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </AdminField>
+        <AdminField label="Available days" className="sm:col-span-2">
+          <AdminDayPicker value={form.available_days} onChange={(days) => setForm((p) => ({ ...p, available_days: days }))} />
+        </AdminField>
       </div>
-    </div>
+    </AdminModal>
   )
 }

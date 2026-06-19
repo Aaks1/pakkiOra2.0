@@ -1,56 +1,89 @@
-import { createContext, useContext, useState, useEffect } from 'react'
-import { login as apiLogin, register as apiRegister, logout as apiLogout } from '../api/auth'
-import { getUser, saveAuth, clearAuth, isAdmin } from '../utils/storage'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import * as authApi from '../api/auth'
+import {
+  clearAuth,
+  getAccessToken,
+  getStoredUser,
+  setStoredUser,
+  setTokens,
+} from '../utils/storage'
 
 const AuthContext = createContext(null)
 
+function isAdminUser(user) {
+  return Boolean(user?.is_staff || user?.is_superuser || user?.role === 'admin')
+}
+
+function normalizeUser(user) {
+  if (!user) return null
+  const role = user.role || (user.is_staff || user.is_superuser ? 'admin' : user.is_patient ? 'patient' : 'user')
+  return { ...user, role }
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => getUser())
-  const [loading, setLoading] = useState(false)
+  const [user, setUser] = useState(() => {
+    const stored = getStoredUser()
+    return stored && getAccessToken() ? normalizeUser(stored) : null
+  })
+  const [bootstrapping, setBootstrapping] = useState(true)
 
   useEffect(() => {
-    setUser(getUser())
+    const stored = getStoredUser()
+    if (stored && getAccessToken()) {
+      setUser(normalizeUser(stored))
+    } else if (!getAccessToken()) {
+      clearAuth()
+      setUser(null)
+    }
+    setBootstrapping(false)
   }, [])
 
-  const login = async (username, password) => {
-    setLoading(true)
-    try {
-      const data = await apiLogin(username, password)
-      saveAuth(data)
-      setUser(data.user)
-      return data.user
-    } finally {
-      setLoading(false)
+  const persistSession = useCallback((sessionUser, tokens) => {
+    const nextUser = normalizeUser(sessionUser)
+    setTokens(tokens?.access, tokens?.refresh)
+    setStoredUser(nextUser)
+    setUser(nextUser)
+    return nextUser
+  }, [])
+
+  const login = useCallback(async (username, password) => {
+    const data = await authApi.login(username, password)
+    const sessionUser = data?.user
+    const tokens = data?.tokens
+    if (!sessionUser?.id || !tokens?.access) {
+      throw new Error('Invalid login response from server.')
     }
-  }
+    return persistSession(sessionUser, tokens)
+  }, [persistSession])
 
-  const register = async (formData) => {
-    setLoading(true)
-    try {
-      const data = await apiRegister(formData)
-      saveAuth(data)
-      setUser(data.user)
-      return data.user
-    } finally {
-      setLoading(false)
+  const register = useCallback(async (payload) => {
+    const data = await authApi.register(payload)
+    const sessionUser = data?.user
+    const tokens = data?.tokens
+    if (!sessionUser?.id || !tokens?.access) {
+      throw new Error('Invalid registration response from server.')
     }
-  }
+    return persistSession(sessionUser, tokens)
+  }, [persistSession])
 
-  const logout = async () => {
-    await apiLogout()
-    clearAuth()
-    setUser(null)
-  }
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout()
+    } finally {
+      clearAuth()
+      setUser(null)
+    }
+  }, [])
 
-  const value = {
+  const value = useMemo(() => ({
     user,
-    loading,
-    isAuthenticated: !!user,
-    isAdmin: isAdmin(user),
+    bootstrapping,
+    isAuthenticated: Boolean(user && getAccessToken()),
+    isAdmin: isAdminUser(user),
     login,
     register,
     logout,
-  }
+  }), [user, bootstrapping, login, register, logout])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

@@ -1,7 +1,7 @@
 from datetime import date, datetime, time, timedelta
 
 from django.contrib.auth.models import User
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from api.exceptions import ServiceError
@@ -92,15 +92,36 @@ class AppointmentService:
             if conflict:
                 raise ServiceError("This slot is already booked. Please choose another slot.")
 
-            return Appointment.objects.create(
-                doctor=doctor,
-                patient=user,
-                date=appointment_date,
-                start_time=start_time,
-                end_time=end_time,
-                symptoms=symptoms,
-                status="BOOKED",
+            cancelled = (
+                Appointment.objects.select_for_update()
+                .filter(
+                    doctor=doctor,
+                    date=appointment_date,
+                    start_time=start_time,
+                    status="CANCELLED",
+                )
+                .first()
             )
+            if cancelled:
+                cancelled.patient = user
+                cancelled.status = "BOOKED"
+                cancelled.symptoms = symptoms
+                cancelled.end_time = end_time
+                cancelled.save(update_fields=["patient", "status", "symptoms", "end_time", "updated_at"])
+                return cancelled
+
+            try:
+                return Appointment.objects.create(
+                    doctor=doctor,
+                    patient=user,
+                    date=appointment_date,
+                    start_time=start_time,
+                    end_time=end_time,
+                    symptoms=symptoms,
+                    status="BOOKED",
+                )
+            except IntegrityError as exc:
+                raise ServiceError("This slot is already booked. Please choose another slot.") from exc
 
     @classmethod
     def reschedule(
@@ -148,7 +169,10 @@ class AppointmentService:
             appointment.date = appointment_date
             appointment.start_time = start_time
             appointment.end_time = end_time
-            appointment.save(update_fields=["date", "start_time", "end_time", "updated_at"])
+            try:
+                appointment.save(update_fields=["date", "start_time", "end_time", "updated_at"])
+            except IntegrityError as exc:
+                raise ServiceError("This slot is already booked. Please choose another slot.") from exc
             return appointment
 
     @classmethod
@@ -221,7 +245,10 @@ class AppointmentService:
             if symptoms is not None:
                 appointment.symptoms = symptoms
 
-            appointment.save()
+            try:
+                appointment.save()
+            except IntegrityError as exc:
+                raise ServiceError("This slot is already booked. Please choose another slot.") from exc
         return appointment
 
     @staticmethod

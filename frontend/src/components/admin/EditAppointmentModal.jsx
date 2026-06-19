@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react'
-import Alert from '../ui/Alert'
-import Button from '../ui/Button'
-import Input from '../ui/Input'
-import Select from '../ui/Select'
+import AdminModal from './AdminModal'
+import AdminField, { inputClass } from './AdminField'
 import { cancelAdminAppointment, listDoctors, updateAdminAppointment } from '../../api/admin'
 import { getErrorMessage } from '../../api/axios'
 import { normalizeList } from '../../utils/apiList'
 
 const STATUS_OPTIONS = ['BOOKED', 'COMPLETED', 'CANCELLED', 'NO_SHOW']
+const FORM_ID = 'edit-appointment-form'
 
-export default function EditAppointmentModal({ appointment, onClose, onSaved }) {
+export default function EditAppointmentModal({ appointment, open, onClose, onSaved }) {
   const [doctors, setDoctors] = useState([])
   const [form, setForm] = useState({ doctor: '', date: '', start_time: '', status: 'BOOKED' })
   const [error, setError] = useState('')
@@ -38,13 +37,12 @@ export default function EditAppointmentModal({ appointment, onClose, onSaved }) 
     setLoading(true)
     setError('')
     try {
-      const payload = {
+      await updateAdminAppointment(appointment.id, {
         doctor: Number(form.doctor),
         date: form.date,
         start_time: form.start_time,
         status: form.status,
-      }
-      await updateAdminAppointment(appointment.id, payload)
+      })
       onSaved?.()
       onClose?.()
     } catch (err) {
@@ -70,38 +68,59 @@ export default function EditAppointmentModal({ appointment, onClose, onSaved }) 
   }
 
   return (
-    <div className="admin-modal" role="dialog" aria-modal="true">
-      <button type="button" className="admin-modal__backdrop" onClick={onClose} aria-label="Close" />
-      <div className="admin-modal__panel">
-        <header className="admin-modal__header">
-          <h2 className="admin-modal__title">Edit appointment #{appointment.id}</h2>
-          <button type="button" className="admin-modal__close" onClick={onClose} aria-label="Close">
-            <i className="fas fa-times" aria-hidden="true" />
+    <AdminModal
+      open={open}
+      title={`Edit appointment #${appointment.id}`}
+      onClose={onClose}
+      formId={FORM_ID}
+      onSubmit={handleSubmit}
+      footer={(
+        <>
+          {appointment.status === 'BOOKED' ? (
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={loading}
+              className="mr-auto text-xs text-red-500 hover:text-red-700"
+            >
+              Cancel appointment
+            </button>
+          ) : null}
+          <button type="button" onClick={onClose} className="rounded-md border border-slate-200 px-4 py-2 text-sm text-slate-700">
+            Close
           </button>
-        </header>
-        <div className="admin-modal__body">
-          <Alert message={error} onClose={() => setError('')} />
-          <form className="dashboard-form" onSubmit={handleSubmit} noValidate>
-            <Select label="Doctor" name="doctor" required value={form.doctor} onChange={setField('doctor')}>
-              <option value="">Select doctor</option>
-              {doctors.map((d) => (
-                <option key={d.id} value={d.id}>{d.full_name || `${d.first_name} ${d.last_name}`}</option>
-              ))}
-            </Select>
-            <Input label="Date" name="date" type="date" required value={form.date} onChange={setField('date')} />
-            <Input label="Time" name="start_time" type="time" required value={form.start_time} onChange={setField('start_time')} />
-            <Select label="Status" name="status" value={form.status} onChange={setField('status')}>
-              {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
-            </Select>
-            <div className="dashboard-form__actions dashboard-form__actions--row">
-              <Button type="submit" variant="primary" loading={loading}>Save</Button>
-              {appointment.status === 'BOOKED' ? (
-                <Button type="button" variant="ghost" onClick={handleCancel} disabled={loading}>Cancel appointment</Button>
-              ) : null}
-            </div>
-          </form>
-        </div>
+          <button type="submit" disabled={loading} className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-700 disabled:opacity-50">
+            {loading ? 'Saving…' : 'Save'}
+          </button>
+        </>
+      )}
+    >
+      {error ? <p className="mb-4 text-sm text-red-600">{error}</p> : null}
+      <div className="grid gap-4">
+        <AdminField label="Doctor">
+          <select className={inputClass} value={form.doctor} onChange={setField('doctor')} required>
+            <option value="">Select doctor</option>
+            {doctors.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.full_name || `${d.first_name} ${d.last_name}`}
+              </option>
+            ))}
+          </select>
+        </AdminField>
+        <AdminField label="Date">
+          <input className={inputClass} type="date" value={form.date} onChange={setField('date')} required />
+        </AdminField>
+        <AdminField label="Time">
+          <input className={inputClass} type="time" value={form.start_time} onChange={setField('start_time')} required />
+        </AdminField>
+        <AdminField label="Status">
+          <select className={inputClass} value={form.status} onChange={setField('status')}>
+            {STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </AdminField>
       </div>
-    </div>
+    </AdminModal>
   )
 }

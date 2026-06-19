@@ -19,12 +19,7 @@ export default function Button({
   ...props
 }) {
   const classes = `${VARIANTS[variant] || VARIANTS.primary} ${className}`.trim()
-  const content = (
-    <>
-      {loading && <i className="fas fa-spinner fa-spin" aria-hidden="true" />}
-      {children}
-    </>
-  )
+  const content = children
 
   if (to) {
     return (

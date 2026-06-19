@@ -21,6 +21,11 @@ export async function updateAdminStaff(id, payload) {
   return unwrap(res)
 }
 
+export async function deleteAdminStaff(id) {
+  const res = await api.delete(`/admin/staff/${id}/`)
+  return unwrap(res)
+}
+
 export async function listAdminPatients(params) {
   const res = await api.get('/admin/patients/', { params: withListParams(params) })
   return unwrap(res)

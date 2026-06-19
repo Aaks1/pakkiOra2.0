@@ -2,6 +2,7 @@ from datetime import date
 
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import Q
 
 
 class Appointment(models.Model):
@@ -25,7 +26,13 @@ class Appointment(models.Model):
 
     class Meta:
         ordering = ["date", "start_time"]
-        unique_together = [("doctor", "date", "start_time")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["doctor", "date", "start_time"],
+                condition=Q(status="BOOKED"),
+                name="unique_booked_doctor_slot",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.patient.username} / Dr. {self.doctor.last_name} / {self.date}"

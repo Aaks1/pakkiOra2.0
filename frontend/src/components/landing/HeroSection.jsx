@@ -6,7 +6,6 @@ import { HERO_SLIDES, TRUST_BADGES } from './landingData'
 export default function HeroSection() {
   return (
     <section className="lp-hero" aria-labelledby="hero-heading">
-      <div className="lp-hero__glow" aria-hidden="true" />
       <Container className="lp-hero__inner">
         <div className="lp-hero__grid">
           <div className="lp-hero__content">

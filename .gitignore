@@ -17,8 +17,13 @@ local_settings.py
 
 # Environment & secrets (never commit)
 .env
+.env.local
+.env.development
+.env.production
 .env.*
 !.env.example
+backend/.env
+frontend/.env
 
 # IDE
 .idea/

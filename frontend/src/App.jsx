@@ -1,24 +1,31 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import Landing from './pages/Landing'
-import Login from './pages/auth/Login'
-import Register from './pages/auth/Register'
-import PatientLayout from './components/patient/PatientLayout'
-import PatientOverview from './pages/patient/PatientOverview'
-import PatientBook from './pages/patient/PatientBook'
-import PatientAppointments from './pages/patient/PatientAppointments'
-import PatientProfile from './pages/patient/PatientProfile'
-import AdminLayout from './components/admin/AdminLayout'
-import AdminOverview from './pages/admin/AdminOverview'
-import AdminPatients from './pages/admin/AdminPatients'
-import AdminStaff from './pages/admin/AdminStaff'
-import AdminAppointments from './pages/admin/AdminAppointments'
-import AdminDoctors from './pages/admin/AdminDoctors'
-import AdminSlots from './pages/admin/AdminSlots'
+import { Landing } from './components/landing'
+import { Login, Register } from './components/auth'
+import {
+  PatientLayout,
+  PatientOverview,
+  PatientBook,
+  PatientDoctors,
+  PatientBookingSuccess,
+  PatientNotifications,
+  PatientAppointments,
+  PatientProfile,
+} from './components/patient'
+import {
+  AdminLayout,
+  AdminDashboard,
+  AdminPatients,
+  AdminStaff,
+  AdminAppointments,
+  AdminDoctors,
+  AdminSlots,
+} from './components/admin'
 
 function ProtectedRoute({ children, requireAdmin = false }) {
-  const { isAuthenticated, isAdmin } = useAuth()
+  const { isAuthenticated, isAdmin, bootstrapping } = useAuth()
 
+  if (bootstrapping) return <p className="p-8 text-sm text-slate-400">Loading...</p>
   if (!isAuthenticated) return <Navigate to="/login" replace />
   if (requireAdmin && !isAdmin) return <Navigate to="/patient/dashboard" replace />
   if (!requireAdmin && isAdmin) return <Navigate to="/admin/dashboard" replace />
@@ -27,8 +34,9 @@ function ProtectedRoute({ children, requireAdmin = false }) {
 }
 
 function AuthOnlyRoute({ children }) {
-  const { isAuthenticated, isAdmin } = useAuth()
+  const { isAuthenticated, isAdmin, bootstrapping } = useAuth()
 
+  if (bootstrapping) return <p className="p-8 text-sm text-slate-400">Loading...</p>
   if (isAuthenticated) {
     return <Navigate to={isAdmin ? '/admin/dashboard' : '/patient/dashboard'} replace />
   }
@@ -54,8 +62,11 @@ export default function App() {
           >
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<PatientOverview />} />
+            <Route path="doctors" element={<PatientDoctors />} />
             <Route path="book" element={<PatientBook />} />
+            <Route path="book/success" element={<PatientBookingSuccess />} />
             <Route path="appointments" element={<PatientAppointments />} />
+            <Route path="notifications" element={<PatientNotifications />} />
             <Route path="profile" element={<PatientProfile />} />
           </Route>
           <Route
@@ -67,7 +78,7 @@ export default function App() {
             )}
           >
             <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<AdminOverview />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="patients" element={<AdminPatients />} />
             <Route path="users" element={<Navigate to="/admin/patients" replace />} />
             <Route path="admins" element={<AdminStaff />} />

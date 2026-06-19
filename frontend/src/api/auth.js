@@ -1,4 +1,5 @@
 import api, { unwrap } from './axios'
+import { getRefreshToken } from '../utils/storage'
 
 export async function login(username, password) {
   const res = await api.post('/auth/login/', { username, password })
@@ -11,10 +12,10 @@ export async function register(form) {
 }
 
 export async function logout() {
-  const refresh = localStorage.getItem('pakkiora_refresh')
+  const refresh = getRefreshToken()
   try {
-    await api.post('/auth/logout/', { refresh })
+    if (refresh) await api.post('/auth/logout/', { refresh })
   } catch {
-    // ignore
+    // ignore — session cleared locally regardless
   }
 }

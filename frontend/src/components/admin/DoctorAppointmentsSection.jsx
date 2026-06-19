@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import Button from '../ui/Button'
+import AdminStatus from './AdminStatus'
+import AdminDataTable, { AdminAction, AdminRowActions } from './AdminDataTable'
 import { cancelAdminAppointment, listAdminAppointments } from '../../api/admin'
 import { getErrorMessage } from '../../api/axios'
 import { normalizeList } from '../../utils/apiList'
@@ -8,11 +9,6 @@ import { normalizeList } from '../../utils/apiList'
 function formatTime(time) {
   if (!time) return '—'
   return String(time).slice(0, 5)
-}
-
-function statusClass(status) {
-  const key = String(status || '').toLowerCase()
-  return `status-badge status-badge--${key}`
 }
 
 export default function DoctorAppointmentsSection({ doctor, onClose }) {
@@ -42,7 +38,6 @@ export default function DoctorAppointmentsSection({ doctor, onClose }) {
 
   const handleCancel = async (appointment) => {
     if (!window.confirm(`Cancel appointment for ${appointment.patient_username}?`)) return
-
     setActionId(appointment.id)
     setError('')
     setSuccess('')
@@ -61,72 +56,48 @@ export default function DoctorAppointmentsSection({ doctor, onClose }) {
 
   const doctorName = doctor.full_name || `Dr. ${doctor.first_name} ${doctor.last_name}`
 
+  const columns = [
+    { key: 'date', header: 'Date', render: (r) => r.date || '—' },
+    { key: 'time', header: 'Time', render: (r) => formatTime(r.start_time) },
+    { key: 'patient', header: 'Patient', render: (r) => r.patient_name || r.patient_username || '—' },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (r) => <AdminStatus status={r.status?.toLowerCase()} label={r.status} />,
+    },
+    { key: 'symptoms', header: 'Symptoms', render: (r) => r.symptoms || '—' },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (r) => (
+        r.status === 'BOOKED' ? (
+          <AdminRowActions>
+            <AdminAction destructive disabled={actionId === r.id} onClick={() => handleCancel(r)}>
+              Cancel
+            </AdminAction>
+          </AdminRowActions>
+        ) : '—'
+      ),
+    },
+  ]
+
   return (
-    <article className="dashboard-card dashboard-card--span doctor-appointments-section">
-      <div className="admin-toolbar">
-        <h2 className="dashboard-card__title admin-toolbar__title">
-          Appointments for {doctorName}
-        </h2>
-        <div className="admin-toolbar__controls">
-          <Link to={`/admin/appointments?doctor=${doctor.id}`} className="dashboard-chip">
+    <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-slate-900">Appointments for {doctorName}</h2>
+        <div className="flex items-center gap-3">
+          <Link to={`/admin/appointments?doctor=${doctor.id}`} className="text-xs text-slate-500 hover:text-slate-900">
             Open full page
           </Link>
-          <Button variant="ghost" onClick={onClose}>Close</Button>
+          <button type="button" onClick={onClose} className="text-xs text-slate-500 hover:text-slate-900">
+            Close
+          </button>
         </div>
       </div>
-
-      {error ? <p className="dashboard-feedback dashboard-feedback--error">{error}</p> : null}
-      {success ? <p className="dashboard-feedback dashboard-feedback--success">{success}</p> : null}
-
-      <div className="dashboard-table-wrap">
-        <table className="dashboard-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Time</th>
-              <th>Patient</th>
-              <th>Status</th>
-              <th>Symptoms</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {appointments.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="dashboard-table__empty">
-                  {loading ? 'Loading appointments…' : 'No appointments for this doctor.'}
-                </td>
-              </tr>
-            ) : (
-              appointments.map((appt) => (
-                <tr key={appt.id}>
-                  <td>{appt.date || '—'}</td>
-                  <td>{formatTime(appt.start_time)}</td>
-                  <td>{appt.patient_name || appt.patient_username || '—'}</td>
-                  <td>
-                    <span className={statusClass(appt.status)}>{appt.status || '—'}</span>
-                  </td>
-                  <td>{appt.symptoms || '—'}</td>
-                  <td>
-                    {appt.status === 'BOOKED' ? (
-                      <Button
-                        variant="ghost"
-                        loading={actionId === appt.id}
-                        disabled={actionId === appt.id}
-                        onClick={() => handleCancel(appt)}
-                      >
-                        Cancel
-                      </Button>
-                    ) : (
-                      '—'
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </article>
+      {error ? <p className="mb-3 text-sm text-red-600">{error}</p> : null}
+      {success ? <p className="mb-3 text-sm text-emerald-700">{success}</p> : null}
+      <AdminDataTable columns={columns} rows={appointments} loading={loading} emptyMessage="No appointments for this doctor." />
+    </div>
   )
 }
+

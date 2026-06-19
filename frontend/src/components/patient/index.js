@@ -1,0 +1,8 @@
+export { default as PatientLayout } from './PatientLayout'
+export { default as PatientOverview } from './PatientOverview'
+export { default as PatientBook } from './PatientBook'
+export { default as PatientDoctors } from './PatientDoctors'
+export { default as PatientBookingSuccess } from './PatientBookingSuccess'
+export { default as PatientNotifications } from './PatientNotifications'
+export { default as PatientAppointments } from './PatientAppointments'
+export { default as PatientProfile } from './PatientProfile'

@@ -15,11 +15,20 @@ export default function LoginForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!form.username.trim()) {
+      setError('Username is required.')
+      return
+    }
+    if (!form.password) {
+      setError('Password is required.')
+      return
+    }
     setError('')
     setLoading(true)
     try {
-      const user = await login(form.username.trim(), form.password)
-      navigate(user?.is_staff || user?.role === 'admin' ? '/admin/dashboard' : '/patient/dashboard')
+      const sessionUser = await login(form.username.trim(), form.password)
+      const isAdmin = sessionUser?.is_staff || sessionUser?.is_superuser || sessionUser?.role === 'admin'
+      navigate(isAdmin ? '/admin/dashboard' : '/patient/dashboard', { replace: true })
     } catch (err) {
       setError(getErrorMessage(err))
     } finally {
@@ -32,7 +41,7 @@ export default function LoginForm() {
       <header className="auth-panel__header">
         <h2 className="auth-panel__title">Sign in</h2>
         <p className="auth-panel__subtitle">
-          Use your username and password to access your patient account.
+          Sign in with your username and password. Patients and admin staff use the same login.
         </p>
       </header>
 

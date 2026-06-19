@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-
-const AUTOPLAY_MS = 5000
+import { FALLBACK_IMAGE } from './landingData'
+const AUTOPLAY_MS = 3500
 const SWIPE_THRESHOLD = 48
 
 export default function HeroCarousel({ slides }) {
   const [activeIndex, setActiveIndex] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
   const [loadedSlides, setLoadedSlides] = useState({})
+  const [failedSlides, setFailedSlides] = useState({})
   const touchStartX = useRef(null)
 
   const goTo = useCallback((index) => {
@@ -24,6 +25,11 @@ export default function HeroCarousel({ slides }) {
   }, [goNext, isPaused, slides.length])
 
   const handleImageLoad = (index) => {
+    setLoadedSlides((prev) => ({ ...prev, [index]: true }))
+  }
+
+  const handleImageError = (index) => {
+    setFailedSlides((prev) => ({ ...prev, [index]: true }))
     setLoadedSlides((prev) => ({ ...prev, [index]: true }))
   }
 
@@ -48,6 +54,8 @@ export default function HeroCarousel({ slides }) {
       className="hero-carousel"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
+      onFocus={() => setIsPaused(true)}
+      onBlur={() => setIsPaused(false)}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       role="region"
@@ -55,50 +63,56 @@ export default function HeroCarousel({ slides }) {
       aria-label="Healthcare highlights"
     >
       <div className="hero-carousel__viewport">
-        {slides.map((slide, index) => {
-          const isActive = index === activeIndex
-          return (
+        <div
+          className="hero-carousel__track"
+          style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+        >
+          {slides.map((slide, index) => (
             <article
               key={slide.headline}
-              className={`hero-carousel__slide${isActive ? ' hero-carousel__slide--active' : ''}`}
-              aria-hidden={!isActive}
+              className="hero-carousel__slide"
+              aria-hidden={index !== activeIndex}
             >
               <img
-                src={slide.image}
+                src={failedSlides[index] ? FALLBACK_IMAGE : slide.image}
                 alt=""
                 className="hero-carousel__image"
                 loading={index === 0 ? 'eager' : 'lazy'}
                 decoding="async"
                 onLoad={() => handleImageLoad(index)}
+                onError={() => handleImageError(index)}
               />
-              <div className="hero-carousel__overlay" aria-hidden="true" />
-              <div className="hero-carousel__caption">
+              <div
+                className={`hero-carousel__caption${index === activeIndex ? ' hero-carousel__caption--visible' : ''}`}
+                aria-live={index === activeIndex ? 'polite' : 'off'}
+              >
                 <h3 className="hero-carousel__headline">{slide.headline}</h3>
                 <p className="hero-carousel__description">{slide.description}</p>
               </div>
             </article>
-          )
-        })}
+          ))}
+        </div>
 
         {isLoading && (
           <div className="hero-carousel__loader" role="status" aria-label="Loading image">
-            <span className="hero-carousel__loader-bar" />
+            <span className="hero-carousel__loader-text">Loading image</span>
           </div>
         )}
-      </div>
 
-      <div className="hero-carousel__controls">
-        {slides.map((slide, index) => (
-          <button
-            key={slide.headline}
-            type="button"
-            className={`hero-carousel__dot${index === activeIndex ? ' hero-carousel__dot--active' : ''}`}
-            onClick={() => goTo(index)}
-            aria-label={`Go to slide ${index + 1}: ${slide.headline}`}
-            aria-current={index === activeIndex ? 'true' : undefined}
-          />
-        ))}
-      </div>
+        {slides.length > 1 && (
+          <div className="hero-carousel__controls">
+            {slides.map((slide, index) => (
+              <button
+                key={slide.headline}
+                type="button"
+                className={`hero-carousel__dot${index === activeIndex ? ' hero-carousel__dot--active' : ''}`}
+                onClick={() => goTo(index)}
+                aria-label={`Go to slide ${index + 1}: ${slide.headline}`}
+                aria-current={index === activeIndex ? 'true' : undefined}
+              />
+            ))}
+          </div>
+        )}      </div>
     </div>
   )
 }

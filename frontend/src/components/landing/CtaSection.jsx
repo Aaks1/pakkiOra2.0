@@ -15,7 +15,7 @@ export default function CtaSection() {
           </p>
         </div>
         <div className="lp-cta__actions">
-          <Button to="/register" variant="white" className="btn--lg">
+          <Button to="/register" variant="primary" className="btn--lg">
             Book Appointment
           </Button>
           <Button to="/register" variant="secondary" className="btn--lg lp-cta__btn-outline">

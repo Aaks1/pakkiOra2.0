@@ -36,7 +36,7 @@ export default function RegisterForm() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const set = (key) => (e) => setForm({ ...form, [key]: e.target.value })
+  const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))
   const isLastStep = step === REGISTER_STEPS.length - 1
 
   const goNext = () => {
@@ -65,7 +65,7 @@ export default function RegisterForm() {
     setLoading(true)
     try {
       await register(buildRegisterPayload(form))
-      navigate('/patient/dashboard')
+      navigate('/patient/dashboard', { replace: true })
     } catch (err) {
       setError(getErrorMessage(err))
     } finally {

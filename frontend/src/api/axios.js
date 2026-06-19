@@ -52,6 +52,11 @@ export function getErrorMessage(error) {
   const data = error.response?.data
   if (data?.message && data.message !== 'Validation failed') return data.message
   if (data?.errors) {
+    const nonField = data.errors.non_field_errors
+    if (nonField) {
+      const text = Array.isArray(nonField) ? nonField[0] : String(nonField)
+      return text
+    }
     const entries = Object.entries(data.errors)
     if (entries.length) {
       const [field, messages] = entries[0]

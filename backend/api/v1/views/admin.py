@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.db import transaction
 from django.db.models import Count, Q
 from django.utils import timezone
 from django_filters import rest_framework as filters
@@ -107,7 +108,7 @@ class AdminPatientViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
-    """Manage patient accounts."""
+    """Manage patient user accounts."""
     permission_classes = [IsAdminUser]
     serializer_class = PatientAccountSerializer
     queryset = User.objects.filter(is_staff=False).select_related("patient_profile").order_by("-date_joined")
@@ -120,7 +121,7 @@ class AdminPatientViewSet(
         "patient_profile__phone",
     ]
     ordering_fields = ["date_joined", "username"]
-    http_method_names = ["get", "patch", "delete", "post", "head", "options"]
+    http_method_names = ["get", "patch", "delete", "head", "options", "post"]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -157,20 +158,15 @@ class AdminPatientViewSet(
                 setattr(user, field, data[field])
         user.save()
 
-        phone = data.get("phone")
-        if phone is not None and hasattr(user, "patient_profile"):
+        if "phone" in data and hasattr(user, "patient_profile"):
             profile = user.patient_profile
-            profile.phone = phone
-            profile.save(update_fields=["phone", "updated_at"])
+            profile.phone = data["phone"]
+            profile.save(update_fields=["phone"])
 
         return success_response(
             data=PatientAccountSerializer(user).data,
             message="Patient account updated successfully",
         )
-
-    def destroy(self, request, *args, **kwargs):
-        super().destroy(request, *args, **kwargs)
-        return success_response(message="Patient account deleted successfully")
 
     @extend_schema(tags=["Admin - Patients"])
     @action(detail=True, methods=["post"], url_path="toggle-active")
@@ -178,10 +174,15 @@ class AdminPatientViewSet(
         user = self.get_object()
         user.is_active = not user.is_active
         user.save(update_fields=["is_active"])
+        state = "activated" if user.is_active else "deactivated"
         return success_response(
-            data={"is_active": user.is_active},
-            message=f"Patient account {'activated' if user.is_active else 'deactivated'}",
+            data=PatientAccountSerializer(user).data,
+            message=f"Patient account {state} successfully",
         )
+
+    def destroy(self, request, *args, **kwargs):
+        super().destroy(request, *args, **kwargs)
+        return success_response(message="Patient account deleted successfully")
 
 
 class AdminAppointmentViewSet(

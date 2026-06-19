@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import Button from '../ui/Button'
+import AdminModal from './AdminModal'
+import AdminStatus from './AdminStatus'
 import { getAdminPatient } from '../../api/admin'
 import { getErrorMessage } from '../../api/axios'
 
@@ -8,13 +9,13 @@ function formatTime(time) {
   return String(time).slice(0, 5)
 }
 
-export default function PatientDetailModal({ patientId, onClose }) {
+export default function PatientDetailModal({ patientId, open, onClose }) {
   const [detail, setDetail] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!patientId) return undefined
+    if (!open || !patientId) return undefined
 
     let active = true
     setLoading(true)
@@ -34,115 +35,105 @@ export default function PatientDetailModal({ patientId, onClose }) {
     return () => {
       active = false
     }
-  }, [patientId])
+  }, [patientId, open])
 
   if (!patientId) return null
 
   const profile = detail?.profile
 
   return (
-    <div className="admin-modal" role="dialog" aria-modal="true" aria-labelledby="patient-detail-title">
-      <button type="button" className="admin-modal__backdrop" onClick={onClose} aria-label="Close" />
-      <div className="admin-modal__panel">
-        <header className="admin-modal__header">
-          <h2 id="patient-detail-title" className="admin-modal__title">Patient details</h2>
-          <button type="button" className="admin-modal__close" onClick={onClose} aria-label="Close">
-            <i className="fas fa-times" aria-hidden="true" />
-          </button>
-        </header>
+    <AdminModal
+      open={open}
+      title="Patient details"
+      onClose={onClose}
+      maxWidth="max-w-2xl"
+      footer={(
+        <button type="button" onClick={onClose} className="rounded-md border border-slate-200 px-4 py-2 text-sm text-slate-700">
+          Close
+        </button>
+      )}
+    >
+      {loading ? <p className="text-sm text-slate-400">Loading...</p> : null}
+      {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
-        <div className="admin-modal__body">
-          {loading ? <p className="admin-modal__loading">Loading patient details…</p> : null}
-          {error ? <p className="dashboard-feedback dashboard-feedback--error">{error}</p> : null}
+      {!loading && !error && detail ? (
+        <div className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-xs font-medium text-slate-500">Username</p>
+              <p className="text-sm text-slate-900">{detail.username}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500">Email</p>
+              <p className="text-sm text-slate-900">{detail.email || '—'}</p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500">Name</p>
+              <p className="text-sm text-slate-900">
+                {`${detail.first_name || ''} ${detail.last_name || ''}`.trim() || '—'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-slate-500">Status</p>
+              <AdminStatus status={detail.is_active ? 'active' : 'inactive'} />
+            </div>
+            {profile ? (
+              <>
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Phone</p>
+                  <p className="text-sm text-slate-900">{profile.phone || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Date of birth</p>
+                  <p className="text-sm text-slate-900">{profile.date_of_birth || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Blood group</p>
+                  <p className="text-sm text-slate-900">{profile.blood_group || '—'}</p>
+                </div>
+                <div className="sm:col-span-2">
+                  <p className="text-xs font-medium text-slate-500">Address</p>
+                  <p className="text-sm text-slate-900">{profile.address || '—'}</p>
+                </div>
+              </>
+            ) : null}
+          </div>
 
-          {!loading && !error && detail ? (
-            <>
-              <section className="admin-detail-grid">
-                <div>
-                  <p className="admin-detail__label">Username</p>
-                  <p className="admin-detail__value">{detail.username}</p>
-                </div>
-                <div>
-                  <p className="admin-detail__label">Email</p>
-                  <p className="admin-detail__value">{detail.email || '—'}</p>
-                </div>
-                <div>
-                  <p className="admin-detail__label">Name</p>
-                  <p className="admin-detail__value">
-                    {`${detail.first_name || ''} ${detail.last_name || ''}`.trim() || '—'}
-                  </p>
-                </div>
-                <div>
-                  <p className="admin-detail__label">Status</p>
-                  <p className="admin-detail__value">{detail.is_active ? 'Active' : 'Inactive'}</p>
-                </div>
-                {profile ? (
-                  <>
-                    <div>
-                      <p className="admin-detail__label">Phone</p>
-                      <p className="admin-detail__value">{profile.phone || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="admin-detail__label">Date of birth</p>
-                      <p className="admin-detail__value">{profile.date_of_birth || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="admin-detail__label">Blood group</p>
-                      <p className="admin-detail__value">{profile.blood_group || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="admin-detail__label">Address</p>
-                      <p className="admin-detail__value">{profile.address || '—'}</p>
-                    </div>
-                    <div className="admin-detail-grid__span">
-                      <p className="admin-detail__label">Allergies</p>
-                      <p className="admin-detail__value">{profile.allergies || '—'}</p>
-                    </div>
-                    <div className="admin-detail-grid__span">
-                      <p className="admin-detail__label">Medical history</p>
-                      <p className="admin-detail__value">{profile.medical_history || '—'}</p>
-                    </div>
-                  </>
-                ) : null}
-              </section>
-
-              <h3 className="admin-modal__section-title">Appointments</h3>
-              <div className="dashboard-table-wrap">
-                <table className="dashboard-table">
-                  <thead>
+          <div>
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-400">Appointments</h3>
+            <div className="overflow-hidden rounded-lg border border-slate-200">
+              <table className="w-full text-sm">
+                <thead className="border-b border-slate-200 bg-slate-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Date</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Time</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Doctor</th>
+                    <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {!detail.appointments?.length ? (
                     <tr>
-                      <th>Date</th>
-                      <th>Time</th>
-                      <th>Doctor</th>
-                      <th>Status</th>
+                      <td colSpan={4} className="px-4 py-6 text-sm text-slate-400">No appointments.</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {!detail.appointments?.length ? (
-                      <tr>
-                        <td colSpan={4} className="dashboard-table__empty">No appointments.</td>
+                  ) : (
+                    detail.appointments.map((appt) => (
+                      <tr key={appt.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="px-4 py-2 text-slate-700">{appt.date}</td>
+                        <td className="px-4 py-2 text-slate-700">{formatTime(appt.start_time)}</td>
+                        <td className="px-4 py-2 text-slate-700">{appt.doctor?.full_name || '—'}</td>
+                        <td className="px-4 py-2">
+                          <AdminStatus status={appt.status?.toLowerCase()} label={appt.status} />
+                        </td>
                       </tr>
-                    ) : (
-                      detail.appointments.map((appt) => (
-                        <tr key={appt.id}>
-                          <td>{appt.date}</td>
-                          <td>{formatTime(appt.start_time)}</td>
-                          <td>{appt.doctor?.full_name || '—'}</td>
-                          <td>{appt.status}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          ) : null}
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
-
-        <footer className="admin-modal__footer">
-          <Button variant="ghost" onClick={onClose}>Close</Button>
-        </footer>
-      </div>
-    </div>
+      ) : null}
+    </AdminModal>
   )
 }

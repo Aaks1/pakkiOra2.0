@@ -5,33 +5,44 @@ export const NAV_LINKS = [
   { id: 'services', label: 'Services', href: '#services' },
 ]
 
+const FALLBACK_IMAGE =
+  'https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1400&h=1050&q=80'
+
+const UNSPLASH_IMG = (photoId) =>
+  `https://unsplash.com/photos/${photoId}/download?force=true&w=1400&h=1050&fit=crop&fm=jpg`
+
 export const HERO_SLIDES = [
   {
-    image: 'https://unsplash.com/photos/man-wearing-medical-mask-and-robe-UIp163xCV6wE',
+    image: UNSPLASH_IMG('tl447mekwuQ'),
+    link: 'https://unsplash.com/photos/woman-in-white-scrub-suit-holding-gray-laptop-computer-tl447mekwuQ',
     headline: 'Book Appointments in Seconds',
     description: 'Find healthcare providers and schedule appointments instantly.',
   },
   {
-    image: 'https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1400&q=80',
+    image: UNSPLASH_IMG('8WYkI3cEZm8'),
+    link: 'https://unsplash.com/photos/doctor-writing-on-a-patients-chart-8WYkI3cEZm8',
     headline: 'Healthcare Made Simple',
     description: 'A seamless healthcare experience for patients and providers.',
   },
   {
-    image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1400&q=80',
+    image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1400&h=1050&q=80',
     headline: 'Virtual Care Anywhere',
     description: 'Connect with healthcare professionals from any location.',
   },
   {
-    image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=1400&q=80',
+    image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=1400&h=1050&q=80',
     headline: 'Trusted Patient Care',
     description: 'Compassionate healthcare backed by modern technology.',
   },
   {
-    image: 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?auto=format&fit=crop&w=1400&q=80',
+    image: UNSPLASH_IMG('HaCqGNFgiGE'),
+    link: 'https://unsplash.com/photos/man-in-white-coat-and-black-pants-standing-beside-white-wooden-picnic-table-HaCqGNFgiGE',
     headline: 'Everything in One Place',
     description: 'Appointments, prescriptions, records, and communication in a unified platform.',
   },
 ]
+
+export { FALLBACK_IMAGE }
 
 export const TRUST_STATS = [
   { value: '50K+', label: 'Patients Served' },
