@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import AdminModal from './AdminModal'
 import AdminStatus from './AdminStatus'
+import ProfileAvatar from '../ui/ProfileAvatar'
 import { getAdminPatient } from '../../api/admin'
 import { getErrorMessage } from '../../api/axios'
+import { patientDisplayName, patientInitials } from '../patient/patientNav'
 
 function formatTime(time) {
   if (!time) return '—'
@@ -58,24 +60,27 @@ export default function PatientDetailModal({ patientId, open, onClose }) {
 
       {!loading && !error && detail ? (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <p className="text-xs font-medium text-slate-500">Username</p>
-              <p className="text-sm text-slate-900">{detail.username}</p>
+          <div className="flex items-center gap-4 border-b border-slate-100 pb-6">
+            <ProfileAvatar
+              photoUrl={profile?.photo_url}
+              initials={patientInitials(detail)}
+              size="2xl"
+            />
+            <div className="min-w-0">
+              <h3 className="text-lg font-semibold text-slate-900">
+                {patientDisplayName(detail) || detail.username}
+              </h3>
+              <p className="text-sm text-slate-500">@{detail.username}</p>
+              <div className="mt-2">
+                <AdminStatus status={detail.is_active ? 'active' : 'inactive'} />
+              </div>
             </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <p className="text-xs font-medium text-slate-500">Email</p>
               <p className="text-sm text-slate-900">{detail.email || '—'}</p>
-            </div>
-            <div>
-              <p className="text-xs font-medium text-slate-500">Name</p>
-              <p className="text-sm text-slate-900">
-                {`${detail.first_name || ''} ${detail.last_name || ''}`.trim() || '—'}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs font-medium text-slate-500">Status</p>
-              <AdminStatus status={detail.is_active ? 'active' : 'inactive'} />
             </div>
             {profile ? (
               <>

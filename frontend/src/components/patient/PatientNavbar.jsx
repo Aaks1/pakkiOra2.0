@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { usePatientUI } from '../../hooks/usePatientUI'
+import ProfileAvatar from '../ui/ProfileAvatar'
 import NotificationDropdown from './NotificationDropdown'
 import { PatientSidebarMenuButton } from './PatientSidebar'
 import { patientInitials } from './patientNav'
@@ -34,10 +35,14 @@ export default function PatientNavbar() {
 
           <Link
             to="/patient/profile"
-            className="patient-avatar"
+            className="block shrink-0 rounded-full ring-2 ring-transparent transition hover:ring-blue-200"
             title={user?.first_name || user?.username || 'Profile'}
           >
-            {patientInitials(user)}
+            <ProfileAvatar
+              photoUrl={user?.photo_url}
+              initials={patientInitials(user)}
+              size="sm"
+            />
           </Link>
         </div>
       </div>

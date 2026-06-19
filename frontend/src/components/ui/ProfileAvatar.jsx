@@ -7,6 +7,7 @@ const SIZES = {
   md: 'h-10 w-10 text-xs',
   lg: 'h-12 w-12 text-sm',
   xl: 'h-16 w-16 text-base',
+  '2xl': 'h-20 w-20 text-lg',
 }
 
 export default function ProfileAvatar({ photoUrl, initials, size = 'md', className = '' }) {

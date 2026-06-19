@@ -10,6 +10,7 @@ import {
   Menu,
 } from 'lucide-react'
 import BrandLogo from '../brand/BrandLogo'
+import ProfileAvatar from '../ui/ProfileAvatar'
 import { useAuth } from '../../context/AuthContext'
 import { usePatientUI } from '../../hooks/usePatientUI'
 import { PATIENT_NAV, patientDisplayName, patientInitials } from './patientNav'
@@ -62,7 +63,11 @@ function SidebarInner({ onNavigate }) {
 
       <div className="border-t border-slate-200 p-4">
         <div className="flex items-center gap-3 px-1">
-          <span className="patient-avatar">{patientInitials(user)}</span>
+          <ProfileAvatar
+            photoUrl={user?.photo_url}
+            initials={patientInitials(user)}
+            size="sm"
+          />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-slate-800">{patientDisplayName(user)}</p>
             <p className="text-xs text-slate-500">Patient account</p>

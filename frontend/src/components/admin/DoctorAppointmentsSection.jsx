@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AdminStatus from './AdminStatus'
 import AdminDataTable, { AdminAction, AdminRowActions } from './AdminDataTable'
+import DoctorAvatar from '../patient/DoctorAvatar'
 import { cancelAdminAppointment, listAdminAppointments } from '../../api/admin'
 import { getErrorMessage } from '../../api/axios'
 import { normalizeList } from '../../utils/apiList'
+import { doctorName } from '../../utils/patientFormat'
 
 function formatTime(time) {
   if (!time) return '—'
@@ -54,7 +56,7 @@ export default function DoctorAppointmentsSection({ doctor, onClose }) {
 
   if (!doctor) return null
 
-  const doctorName = doctor.full_name || `Dr. ${doctor.first_name} ${doctor.last_name}`
+  const displayName = doctorName(doctor)
 
   const columns = [
     { key: 'date', header: 'Date', render: (r) => r.date || '—' },
@@ -83,8 +85,17 @@ export default function DoctorAppointmentsSection({ doctor, onClose }) {
 
   return (
     <div className="mt-8 rounded-lg border border-slate-200 bg-white p-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-900">Appointments for {doctorName}</h2>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-4">
+          <DoctorAvatar doctor={doctor} size="lg" />
+          <div className="min-w-0">
+            <h2 className="text-sm font-semibold text-slate-900">{displayName}</h2>
+            {doctor.specialization ? (
+              <p className="text-xs text-slate-500">{doctor.specialization}</p>
+            ) : null}
+            <p className="mt-1 text-xs text-slate-400">Appointments</p>
+          </div>
+        </div>
         <div className="flex items-center gap-3">
           <Link to={`/admin/appointments?doctor=${doctor.id}`} className="text-xs text-slate-500 hover:text-slate-900">
             Open full page

@@ -75,6 +75,15 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
+  const updateUser = useCallback((patch) => {
+    setUser((prev) => {
+      if (!prev) return prev
+      const next = normalizeUser({ ...prev, ...patch })
+      setStoredUser(next)
+      return next
+    })
+  }, [])
+
   const value = useMemo(() => ({
     user,
     bootstrapping,
@@ -83,7 +92,8 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
-  }), [user, bootstrapping, login, register, logout])
+    updateUser,
+  }), [user, bootstrapping, login, register, logout, updateUser])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

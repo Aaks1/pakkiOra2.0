@@ -18,7 +18,7 @@ export function extractPublicId(url) {
   return match?.[1] || null
 }
 
-const SIZE_PX = { sm: 72, md: 80, lg: 96, xl: 128 }
+const SIZE_PX = { sm: 72, md: 80, lg: 96, xl: 128, '2xl': 160 }
 
 export function getAvatarImage(photoUrl, size = 'md') {
   const client = getClient()

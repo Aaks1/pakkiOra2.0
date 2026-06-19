@@ -6,9 +6,11 @@ import AdminDataTable, { AdminAction, AdminRowActions } from './AdminDataTable'
 import { AdminError, AdminSuccess } from './AdminFeedback'
 import PatientDetailModal from './PatientDetailModal'
 import EditPatientModal from './EditPatientModal'
+import AdminPersonCell from './AdminPersonCell'
 import { deletePatient, listAdminPatients, togglePatientActive } from '../../api/admin'
 import { getErrorMessage } from '../../api/axios'
 import { normalizeList } from '../../utils/apiList'
+import { patientInitials, patientDisplayName } from '../patient/patientNav'
 
 const FILTERS = [
   { value: 'patient', label: 'With profile' },
@@ -79,13 +81,28 @@ export default function AdminPatients() {
   }
 
   const columns = [
-    { key: 'username', header: 'Username', render: (r) => r.username || '—' },
     {
-      key: 'name',
-      header: 'Name',
-      render: (r) => `${r.first_name || ''} ${r.last_name || ''}`.trim() || '—',
+      key: 'patient',
+      header: 'Patient',
+      render: (r) => (
+        <AdminPersonCell
+          photoUrl={r.photo_url}
+          name={patientDisplayName(r) || r.username || '—'}
+          subtitle={r.username}
+          initials={patientInitials(r)}
+        />
+      ),
     },
-    { key: 'email', header: 'Email', render: (r) => r.email || '—' },
+    {
+      key: 'email',
+      header: 'Email',
+      cellClassName: 'admin-table__cell--email',
+      render: (r) => (
+        <span className="admin-table__truncate" title={r.email || undefined}>
+          {r.email || '—'}
+        </span>
+      ),
+    },
     {
       key: 'status',
       header: 'Status',

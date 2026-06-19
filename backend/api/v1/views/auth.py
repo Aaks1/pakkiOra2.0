@@ -11,7 +11,7 @@ from api.v1.serializers.auth import LoginSerializer, PatientRegistrationSerializ
 
 
 def _user_payload(user: User) -> dict:
-    return {
+    payload = {
         "id": user.id,
         "username": user.username,
         "email": user.email,
@@ -21,6 +21,9 @@ def _user_payload(user: User) -> dict:
         "is_superuser": user.is_superuser,
         "is_patient": hasattr(user, "patient_profile"),
     }
+    if hasattr(user, "patient_profile"):
+        payload["photo_url"] = user.patient_profile.photo_url or ""
+    return payload
 
 
 def _tokens_for_user(user: User) -> dict:

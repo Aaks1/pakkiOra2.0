@@ -9,9 +9,11 @@ import CreateDoctorModal from './CreateDoctorModal'
 import EditDoctorModal from './EditDoctorModal'
 import DoctorSlotModal from './DoctorSlotModal'
 import DoctorAppointmentsSection from './DoctorAppointmentsSection'
+import AdminPersonCell from './AdminPersonCell'
 import { deleteDoctor, listDoctors, toggleDoctorActive } from '../../api/admin'
 import { getErrorMessage } from '../../api/axios'
 import { normalizeList } from '../../utils/apiList'
+import { doctorInitials, doctorName } from '../../utils/patientFormat'
 
 export default function AdminDoctors() {
   const [doctors, setDoctors] = useState([])
@@ -88,7 +90,13 @@ export default function AdminDoctors() {
     {
       key: 'name',
       header: 'Doctor',
-      render: (r) => r.full_name || `Dr. ${r.first_name} ${r.last_name}`,
+      render: (r) => (
+        <AdminPersonCell
+          photoUrl={r.photo_url}
+          name={doctorName(r)}
+          initials={doctorInitials(r)}
+        />
+      ),
     },
     { key: 'specialization', header: 'Specialization', render: (r) => r.specialization || '—' },
     {
