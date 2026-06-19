@@ -62,6 +62,8 @@ class DoctorViewSet(viewsets.ModelViewSet):
         if self.action in ("create", "update", "partial_update"):
             return DoctorWriteSerializer
         if self.action == "list":
+            if is_admin_user(self.request.user):
+                return DoctorSerializer
             return DoctorListSerializer
         return DoctorSerializer
 

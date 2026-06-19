@@ -44,6 +44,8 @@ class DoctorListSerializer(serializers.ModelSerializer):
             "full_name",
             "first_name",
             "last_name",
+            "email",
+            "phone",
             "specialization",
             "qualification",
             "experience_years",
