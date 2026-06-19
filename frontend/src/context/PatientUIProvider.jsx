@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { getAppointmentHistory } from '../api/patient'
+import { useCallback, useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { isTomorrow, doctorName } from '../utils/patientFormat'
+import { useAppointmentHistory } from '../hooks/usePatientQueries'
 import { PatientUIContext } from './patientUIContext'
 
 const READ_KEY = 'pakkiora_notifications_read'
@@ -26,70 +27,66 @@ function getLastBookingId() {
   }
 }
 
+function buildNotifications(history) {
+  if (!history) return []
+  const items = []
+  const now = new Date().toISOString()
+  const lastBookingId = getLastBookingId()
+
+  ;(history.upcoming || []).forEach((appt) => {
+    items.push({
+      id: `upcoming-${appt.id}`,
+      title: isTomorrow(appt.date) ? 'Appointment Tomorrow' : 'Upcoming Appointment',
+      body: `${doctorName(appt.doctor)} · ${appt.date} at ${String(appt.start_time).slice(0, 5)}`,
+      time: appt.created_at || now,
+      type: 'upcoming',
+    })
+  })
+
+  ;(history.cancelled || [])
+    .slice()
+    .sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at))
+    .slice(0, 10)
+    .forEach((appt) => {
+      items.push({
+        id: `cancelled-${appt.id}`,
+        title: 'Appointment Cancelled',
+        body: `${doctorName(appt.doctor)} · ${appt.date} at ${String(appt.start_time).slice(0, 5)}`,
+        time: appt.updated_at || appt.created_at || now,
+        type: 'cancelled',
+      })
+    })
+
+  const confirmedAppt = lastBookingId
+    ? (history.upcoming || []).find((a) => String(a.id) === lastBookingId)
+    : null
+
+  if (confirmedAppt) {
+    items.unshift({
+      id: `confirmed-${confirmedAppt.id}`,
+      title: 'Appointment Confirmed',
+      body: `${doctorName(confirmedAppt.doctor)} · ${confirmedAppt.date} at ${String(confirmedAppt.start_time).slice(0, 5)}`,
+      time: confirmedAppt.created_at || now,
+      type: 'confirmed',
+    })
+  }
+
+  items.sort((a, b) => new Date(b.time) - new Date(a.time))
+  return items
+}
+
 export default function PatientUIProvider({ children }) {
+  const queryClient = useQueryClient()
+  const { data: history } = useAppointmentHistory()
   const [search, setSearch] = useState('')
-  const [notifications, setNotifications] = useState([])
   const [readIds, setReadIds] = useState(loadReadIds)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  const notifications = useMemo(() => buildNotifications(history), [history])
+
   const refreshNotifications = useCallback(async () => {
-    try {
-      const history = await getAppointmentHistory()
-      const items = []
-      const now = new Date().toISOString()
-      const lastBookingId = getLastBookingId()
-
-      ;(history?.upcoming || []).forEach((appt) => {
-        items.push({
-          id: `upcoming-${appt.id}`,
-          title: isTomorrow(appt.date) ? 'Appointment Tomorrow' : 'Upcoming Appointment',
-          body: `${doctorName(appt.doctor)} · ${appt.date} at ${String(appt.start_time).slice(0, 5)}`,
-          time: appt.created_at || now,
-          type: 'upcoming',
-        })
-      })
-
-      ;(history?.cancelled || [])
-        .slice()
-        .sort((a, b) => new Date(b.updated_at || b.created_at) - new Date(a.updated_at || a.created_at))
-        .slice(0, 10)
-        .forEach((appt) => {
-          items.push({
-            id: `cancelled-${appt.id}`,
-            title: 'Appointment Cancelled',
-            body: `${doctorName(appt.doctor)} · ${appt.date} at ${String(appt.start_time).slice(0, 5)}`,
-            time: appt.updated_at || appt.created_at || now,
-            type: 'cancelled',
-          })
-        })
-
-      const confirmedAppt = lastBookingId
-        ? (history?.upcoming || []).find((a) => String(a.id) === lastBookingId)
-        : null
-
-      if (confirmedAppt) {
-        items.unshift({
-          id: `confirmed-${confirmedAppt.id}`,
-          title: 'Appointment Confirmed',
-          body: `${doctorName(confirmedAppt.doctor)} · ${confirmedAppt.date} at ${String(confirmedAppt.start_time).slice(0, 5)}`,
-          time: confirmedAppt.created_at || now,
-          type: 'confirmed',
-        })
-      }
-
-      items.sort((a, b) => new Date(b.time) - new Date(a.time))
-      setNotifications(items)
-    } catch {
-      setNotifications([])
-    }
-  }, [])
-
-  useEffect(() => {
-    refreshNotifications()
-    const onFocus = () => refreshNotifications()
-    window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
-  }, [refreshNotifications])
+    await queryClient.invalidateQueries({ queryKey: ['appointmentHistory'] })
+  }, [queryClient])
 
   const isRead = useCallback((id) => readIds.has(id), [readIds])
 

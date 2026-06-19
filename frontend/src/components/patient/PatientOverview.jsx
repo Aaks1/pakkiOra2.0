@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Calendar, ClipboardList, Search, Stethoscope, Sparkles } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { getErrorMessage } from '../../api/axios'
-import { cancelAppointment, getAppointmentHistory } from '../../api/patient'
+import { cancelAppointment } from '../../api/patient'
+import { useAppointmentHistory, useInvalidatePatientData } from '../../hooks/usePatientQueries'
 import AppointmentDrawer from './AppointmentDrawer'
 import NextAppointmentTicket from './NextAppointmentTicket'
 import PageLoader from './PageLoader'
@@ -20,28 +21,11 @@ const QUICK_ACTIONS = [
 export default function PatientOverview() {
   const { user } = useAuth()
   const { refreshNotifications } = usePatientUI()
-  const [history, setHistory] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const { invalidateHistory } = useInvalidatePatientData()
+  const { data: history, isLoading, error, refetch } = useAppointmentHistory()
   const [drawerAppt, setDrawerAppt] = useState(null)
   const [cancelling, setCancelling] = useState(false)
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const data = await getAppointmentHistory()
-      setHistory(data)
-    } catch (err) {
-      setError(getErrorMessage(err))
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
+  const [actionError, setActionError] = useState('')
 
   const nextAppt = history?.upcoming?.[0]
   const stats = [
@@ -54,18 +38,18 @@ export default function PatientOverview() {
   const handleCancel = async (appointment) => {
     if (!window.confirm('Cancel this appointment?')) return
     setCancelling(true)
+    setActionError('')
     try {
       await cancelAppointment(appointment.id)
-      refreshNotifications()
-      await load()
+      await Promise.all([refreshNotifications(), invalidateHistory()])
     } catch (err) {
-      setError(getErrorMessage(err))
+      setActionError(getErrorMessage(err))
     } finally {
       setCancelling(false)
     }
   }
 
-  if (loading) return <PageLoader label="Loading dashboard..." />
+  if (isLoading && !history) return <PageLoader label="Loading dashboard..." />
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
@@ -93,7 +77,8 @@ export default function PatientOverview() {
         </section>
       </PatientFadeIn>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? <p className="text-sm text-red-600">{getErrorMessage(error)}</p> : null}
+      {actionError ? <p className="text-sm text-red-600">{actionError}</p> : null}
 
       <PatientFadeIn delay={0.08}>
         <section>
@@ -143,7 +128,10 @@ export default function PatientOverview() {
       <AppointmentDrawer
         appointment={drawerAppt}
         onClose={() => setDrawerAppt(null)}
-        onSaved={load}
+        onSaved={() => {
+          invalidateHistory()
+          refetch()
+        }}
       />
     </div>
   )

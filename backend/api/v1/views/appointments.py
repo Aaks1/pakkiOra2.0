@@ -137,16 +137,33 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"])
     def history(self, request):
         """Grouped appointment history: upcoming, past, cancelled, completed."""
-        qs = self.filter_queryset(self.get_queryset())
+        appointments = list(self.filter_queryset(self.get_queryset()))
         today = timezone.now().date()
 
+        upcoming = []
+        past = []
+        cancelled = []
+        completed = []
+        no_show = []
+
+        for appt in appointments:
+            if appt.status == "BOOKED" and appt.date >= today:
+                upcoming.append(appt)
+            elif appt.status == "CANCELLED":
+                cancelled.append(appt)
+            elif appt.status == "COMPLETED":
+                completed.append(appt)
+            elif appt.status == "NO_SHOW":
+                no_show.append(appt)
+            elif appt.date < today:
+                past.append(appt)
+
+        serializer = AppointmentSerializer
         data = {
-            "upcoming": AppointmentSerializer(
-                qs.filter(date__gte=today, status="BOOKED"), many=True
-            ).data,
-            "past": AppointmentSerializer(qs.filter(date__lt=today), many=True).data,
-            "cancelled": AppointmentSerializer(qs.filter(status="CANCELLED"), many=True).data,
-            "completed": AppointmentSerializer(qs.filter(status="COMPLETED"), many=True).data,
-            "no_show": AppointmentSerializer(qs.filter(status="NO_SHOW"), many=True).data,
+            "upcoming": serializer(upcoming, many=True).data,
+            "past": serializer(past, many=True).data,
+            "cancelled": serializer(cancelled, many=True).data,
+            "completed": serializer(completed, many=True).data,
+            "no_show": serializer(no_show, many=True).data,
         }
         return success_response(data=data)

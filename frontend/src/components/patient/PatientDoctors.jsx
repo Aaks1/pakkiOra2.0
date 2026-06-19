@@ -1,38 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { listDoctors } from '../../api/patient'
 import { getErrorMessage } from '../../api/axios'
+import { useDoctors } from '../../hooks/usePatientQueries'
+import { usePatientUI } from '../../hooks/usePatientUI'
 import DoctorCard from './DoctorCard'
 import DoctorFilters from './DoctorFilters'
 import PageLoader from './PageLoader'
-import { usePatientUI } from '../../hooks/usePatientUI'
 
 export default function PatientDoctors() {
   const { search } = usePatientUI()
-  const [doctors, setDoctors] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const { data: doctors = [], isLoading, isFetching, error } = useDoctors(search)
   const [tab, setTab] = useState('all')
-
-  useEffect(() => {
-    let active = true
-    setLoading(true)
-    listDoctors(search ? { search } : {})
-      .then((data) => {
-        if (active) setDoctors(data)
-      })
-      .catch((err) => {
-        if (active) setError(getErrorMessage(err))
-      })
-      .finally(() => {
-        if (active) setLoading(false)
-      })
-    return () => { active = false }
-  }, [search])
 
   const filtered = tab === 'all'
     ? doctors
     : doctors.filter((d) => d.specialization?.toLowerCase().includes(tab))
+
+  const showLoader = isLoading && doctors.length === 0
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -48,15 +32,20 @@ export default function PatientDoctors() {
 
       <DoctorFilters activeTab={tab} onTabChange={setTab} />
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-      {loading ? <PageLoader label="Loading doctors..." /> : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {filtered.length === 0 ? (
-            <p className="text-sm text-slate-500">No doctors found.</p>
-          ) : (
-            filtered.map((doctor) => <DoctorCard key={doctor.id} doctor={doctor} />)
-          )}
-        </div>
+      {error ? <p className="text-sm text-red-600">{getErrorMessage(error)}</p> : null}
+      {showLoader ? <PageLoader label="Loading doctors..." /> : (
+        <>
+          {isFetching && doctors.length > 0 ? (
+            <p className="text-xs text-slate-400">Updating list…</p>
+          ) : null}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.length === 0 ? (
+              <p className="text-sm text-slate-500">No doctors found.</p>
+            ) : (
+              filtered.map((doctor) => <DoctorCard key={doctor.id} doctor={doctor} />)
+            )}
+          </div>
+        </>
       )}
     </div>
   )

@@ -11,6 +11,7 @@ from api.permissions import IsAdminUser, is_admin_user
 from api.responses import success_response
 from api.v1.serializers.doctors import (
     DoctorAvailabilitySerializer,
+    DoctorListSerializer,
     DoctorSerializer,
     DoctorSlotConfigSerializer,
     DoctorWriteSerializer,
@@ -60,6 +61,8 @@ class DoctorViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action in ("create", "update", "partial_update"):
             return DoctorWriteSerializer
+        if self.action == "list":
+            return DoctorListSerializer
         return DoctorSerializer
 
     def get_queryset(self):
@@ -105,6 +108,43 @@ class DoctorViewSet(viewsets.ModelViewSet):
             )
         super().destroy(request, *args, **kwargs)
         return success_response(message="Doctor deleted successfully")
+
+    @extend_schema(tags=["Doctors"])
+    @action(detail=True, methods=["get"], url_path="booking-context")
+    def booking_context(self, request, pk=None):
+        """Doctor profile, available dates, and slots for one date in a single request."""
+        doctor = self.get_object()
+        today = timezone.now().date()
+        days = int(request.query_params.get("days", 30))
+        dates = [
+            d for d in AvailabilityService.get_available_dates(doctor, today, days_ahead=days)
+            if d >= today
+        ]
+
+        date_str = request.query_params.get("date")
+        selected_date = None
+        if date_str:
+            try:
+                selected_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except ValueError:
+                selected_date = None
+        if selected_date is None and dates:
+            selected_date = dates[0]
+
+        slots = []
+        if selected_date and selected_date >= today:
+            slots = SlotService.serialize_slots(
+                SlotService.get_available_slots(doctor, selected_date)
+            )
+
+        return success_response(
+            data={
+                "doctor": DoctorListSerializer(doctor).data,
+                "dates": [d.isoformat() for d in dates],
+                "date": selected_date.isoformat() if selected_date else None,
+                "slots": slots,
+            },
+        )
 
     @extend_schema(tags=["Doctors"])
     @action(detail=True, methods=["get"], url_path="available-dates")

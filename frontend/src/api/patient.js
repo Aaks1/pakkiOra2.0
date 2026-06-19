@@ -16,6 +16,13 @@ export async function getDoctorAvailableDates(doctorId, days = 30) {
   return unwrap(res)?.dates ?? []
 }
 
+export async function getDoctorBookingContext(doctorId, { date, days = 30 } = {}) {
+  const params = { days }
+  if (date) params.date = date
+  const res = await api.get(`/doctors/${doctorId}/booking-context/`, { params })
+  return unwrap(res)
+}
+
 export async function getDoctorSlots(doctorId, date) {
   const res = await api.get(`/doctors/${doctorId}/slots/`, { params: { date } })
   return unwrap(res)

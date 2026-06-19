@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { bookAppointment, getDoctor, getDoctorAvailableDates, getDoctorSlots, listDoctors } from '../../api/patient'
+import { bookAppointment } from '../../api/patient'
 import { getErrorMessage } from '../../api/axios'
 import { usePatientUI } from '../../hooks/usePatientUI'
+import { useDoctors, useDoctorBookingContext, useDoctorSlots, useInvalidatePatientData } from '../../hooks/usePatientQueries'
 import BookingStepProgress from './BookingStepProgress'
 import BookingSummary from './BookingSummary'
 import DateSlider from './DateSlider'
@@ -13,82 +14,65 @@ export default function PatientBook() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { refreshNotifications } = usePatientUI()
+  const { invalidateHistory } = useInvalidatePatientData()
+  const { data: doctors = [], isLoading: doctorsLoading } = useDoctors()
   const [step, setStep] = useState(1)
-  const [doctors, setDoctors] = useState([])
   const [doctorId, setDoctorId] = useState('')
-  const [doctor, setDoctor] = useState(null)
-  const [dates, setDates] = useState([])
   const [date, setDate] = useState('')
-  const [slots, setSlots] = useState([])
+  const [contextDate, setContextDate] = useState('')
   const [slot, setSlot] = useState(null)
-  const [slotsLoading, setSlotsLoading] = useState(false)
   const [symptoms, setSymptoms] = useState('')
-  const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
+  const {
+    data: bookingContext,
+    isLoading: bookingLoading,
+    isFetching: bookingFetching,
+  } = useDoctorBookingContext(doctorId)
+
+  const fetchSlotsForDate = Boolean(doctorId && date && date !== contextDate)
+  const {
+    data: slotsData,
+    isLoading: slotsLoading,
+    isFetching: slotsFetching,
+  } = useDoctorSlots(doctorId, date, fetchSlotsForDate)
+
   useEffect(() => {
     const preselectedDoctor = searchParams.get('doctor')
-    listDoctors()
-      .then((data) => {
-        setDoctors(data)
-        if (preselectedDoctor && data.some((d) => String(d.id) === preselectedDoctor)) {
-          setDoctorId(preselectedDoctor)
-          setStep(2)
-        }
-      })
-      .catch((err) => setError(getErrorMessage(err)))
-      .finally(() => setLoading(false))
-  }, [searchParams])
+    if (preselectedDoctor && doctors.some((d) => String(d.id) === preselectedDoctor)) {
+      setDoctorId(preselectedDoctor)
+      setStep(2)
+    }
+  }, [searchParams, doctors])
 
   useEffect(() => {
     if (!doctorId) {
-      setDoctor(null)
-      setDates([])
       setDate('')
-      setSlots([])
+      setContextDate('')
       setSlot(null)
       return
     }
-
-    let active = true
-    Promise.all([
-      getDoctor(doctorId),
-      getDoctorAvailableDates(doctorId, 30),
-    ])
-      .then(([doc, availableDates]) => {
-        if (!active) return
-        setDoctor(doc)
-        setDates(availableDates)
-        setDate(availableDates[0] || '')
-      })
-      .catch(() => {
-        if (!active) return
-        setDoctor(null)
-        setDates([])
-        setDate('')
-      })
-
-    return () => { active = false }
-  }, [doctorId])
+    if (!bookingContext) return
+    const nextDate = bookingContext.date || ''
+    setDate(nextDate)
+    setContextDate(nextDate)
+    setSlot(null)
+  }, [doctorId, bookingContext])
 
   useEffect(() => {
-    if (!doctorId || !date) return
-    let active = true
-    setSlotsLoading(true)
     setSlot(null)
-    getDoctorSlots(doctorId, date)
-      .then((data) => {
-        if (active) setSlots(data?.slots || [])
-      })
-      .catch(() => {
-        if (active) setSlots([])
-      })
-      .finally(() => {
-        if (active) setSlotsLoading(false)
-      })
-    return () => { active = false }
-  }, [doctorId, date])
+  }, [date])
+
+  const doctor = bookingContext?.doctor ?? doctors.find((d) => String(d.id) === doctorId) ?? null
+  const dates = bookingContext?.dates ?? []
+  const slots = useMemo(() => {
+    if (fetchSlotsForDate) return slotsData?.slots || []
+    return bookingContext?.slots || []
+  }, [fetchSlotsForDate, slotsData, bookingContext])
+
+  const showInitialLoader = doctorsLoading && doctors.length === 0
+  const showStepLoader = Boolean(doctorId && (bookingLoading || bookingFetching) && !bookingContext)
 
   const handleBook = async () => {
     if (!doctorId || !date || !slot) return
@@ -104,7 +88,7 @@ export default function PatientBook() {
       if (result?.id) {
         sessionStorage.setItem('pakkiora_last_booking_id', String(result.id))
       }
-      refreshNotifications()
+      await Promise.all([refreshNotifications(), invalidateHistory()])
       navigate('/patient/book/success', { state: { doctor, date, slot, symptoms } })
     } catch (err) {
       setError(getErrorMessage(err))
@@ -113,7 +97,7 @@ export default function PatientBook() {
     }
   }
 
-  if (loading) return <PageLoader label="Loading booking..." />
+  if (showInitialLoader) return <PageLoader label="Loading booking..." />
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -151,12 +135,21 @@ export default function PatientBook() {
 
       {step === 2 && (
         <div className="space-y-4">
-          <DateSlider dates={dates} selected={date} onSelect={setDate} />
-          <SlotPicker slots={slots} selected={slot} onSelect={setSlot} loading={slotsLoading} />
-          <div className="flex gap-2">
-            <button type="button" onClick={() => setStep(1)} className="rounded-md border border-slate-200 px-4 py-2 text-sm">Back</button>
-            <button type="button" disabled={!slot} onClick={() => setStep(3)} className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50">Continue</button>
-          </div>
+          {showStepLoader ? <PageLoader label="Loading availability..." /> : (
+            <>
+              <DateSlider dates={dates} selected={date} onSelect={setDate} />
+              <SlotPicker
+                slots={slots}
+                selected={slot}
+                onSelect={setSlot}
+                loading={fetchSlotsForDate && (slotsLoading || slotsFetching)}
+              />
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setStep(1)} className="rounded-md border border-slate-200 px-4 py-2 text-sm">Back</button>
+                <button type="button" disabled={!slot} onClick={() => setStep(3)} className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50">Continue</button>
+              </div>
+            </>
+          )}
         </div>
       )}
 

@@ -1,46 +1,31 @@
-import { useCallback, useEffect, useState } from 'react'
-import { cancelAppointment, getAppointmentHistory } from '../../api/patient'
+import { useState } from 'react'
 import { getErrorMessage } from '../../api/axios'
+import { cancelAppointment } from '../../api/patient'
+import { useAppointmentHistory, useInvalidatePatientData } from '../../hooks/usePatientQueries'
+import { usePatientUI } from '../../hooks/usePatientUI'
 import AppointmentCard from './AppointmentCard'
 import AppointmentDrawer from './AppointmentDrawer'
 import PageLoader from './PageLoader'
-import { usePatientUI } from '../../hooks/usePatientUI'
 
 export default function PatientAppointments() {
   const { refreshNotifications } = usePatientUI()
-  const [history, setHistory] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const { invalidateHistory } = useInvalidatePatientData()
+  const { data: history, isLoading, error, refetch } = useAppointmentHistory()
   const [drawerAppt, setDrawerAppt] = useState(null)
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    setError('')
-    try {
-      setHistory(await getAppointmentHistory())
-    } catch (err) {
-      setError(getErrorMessage(err))
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-  }, [load])
+  const [actionError, setActionError] = useState('')
 
   const handleCancel = async (appointment) => {
     if (!window.confirm('Cancel this appointment?')) return
+    setActionError('')
     try {
       await cancelAppointment(appointment.id)
-      refreshNotifications()
-      await load()
+      await Promise.all([refreshNotifications(), invalidateHistory()])
     } catch (err) {
-      setError(getErrorMessage(err))
+      setActionError(getErrorMessage(err))
     }
   }
 
-  if (loading) return <PageLoader label="Loading appointments..." />
+  if (isLoading && !history) return <PageLoader label="Loading appointments..." />
 
   const upcoming = history?.upcoming || []
   const past = [...(history?.completed || []), ...(history?.cancelled || [])]
@@ -52,7 +37,8 @@ export default function PatientAppointments() {
         <p className="mt-1 text-sm text-slate-600">Upcoming and past visits</p>
       </header>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? <p className="text-sm text-red-600">{getErrorMessage(error)}</p> : null}
+      {actionError ? <p className="text-sm text-red-600">{actionError}</p> : null}
 
       <section>
         <h2 className="mb-4 text-xs font-medium uppercase tracking-wide text-slate-400">Upcoming</h2>
@@ -84,7 +70,14 @@ export default function PatientAppointments() {
         </div>
       </section>
 
-      <AppointmentDrawer appointment={drawerAppt} onClose={() => setDrawerAppt(null)} onSaved={load} />
+      <AppointmentDrawer
+        appointment={drawerAppt}
+        onClose={() => setDrawerAppt(null)}
+        onSaved={() => {
+          invalidateHistory()
+          refetch()
+        }}
+      />
     </div>
   )
 }

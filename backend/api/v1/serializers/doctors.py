@@ -34,6 +34,28 @@ class DoctorSerializer(serializers.ModelSerializer):
         return f"Dr. {obj.first_name} {obj.last_name}"
 
 
+class DoctorListSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Doctor
+        fields = [
+            "id",
+            "full_name",
+            "first_name",
+            "last_name",
+            "specialization",
+            "qualification",
+            "experience_years",
+            "available_days",
+            "time_slots",
+            "is_active",
+        ]
+
+    def get_full_name(self, obj) -> str:
+        return f"Dr. {obj.first_name} {obj.last_name}"
+
+
 class DoctorWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doctor

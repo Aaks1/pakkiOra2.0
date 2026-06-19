@@ -1,10 +1,9 @@
 from datetime import date, datetime, timedelta
 from typing import Any
 
-from doctors.models import Doctor
+from doctors.models import Doctor, DoctorAvailability
 
 from appointments.models import Appointment
-from .availability_service import AvailabilityService
 
 SLOT_DURATION_MINUTES = 30
 DEFAULT_START = "09:00"
@@ -108,8 +107,16 @@ class SlotService:
         *,
         exclude_appointment_id: int | None = None,
     ) -> list[dict[str, Any]]:
-        if not AvailabilityService.is_doctor_available_on_date(doctor, selected_date):
-            return []
+        override = DoctorAvailability.objects.filter(
+            doctor=doctor, date=selected_date
+        ).only("is_available").first()
+        if override:
+            if not override.is_available:
+                return []
+        else:
+            day_name = selected_date.strftime("%A").lower()
+            if day_name not in (doctor.available_days or []):
+                return []
 
         slots = cls.parse_doctor_time_slots(doctor, selected_date) or cls.generate_default_time_slots(
             selected_date
