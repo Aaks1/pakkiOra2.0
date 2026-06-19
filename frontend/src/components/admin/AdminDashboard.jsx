@@ -26,19 +26,18 @@ function formatToday() {
 }
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 16 },
-  visible: (i) => ({
+  hidden: { opacity: 0, y: 8 },
+  visible: {
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.06, duration: 0.35, ease: [0.4, 0, 0.2, 1] },
-  }),
+    transition: { duration: 0.2, ease: [0.4, 0, 0.2, 1] },
+  },
 }
 
-function StatCard({ icon: Icon, label, value, trend, red, index }) {
+function StatCard({ icon: Icon, label, value, trend, red }) {
   return (
     <motion.div
       className="admin-stat-card"
-      custom={index}
       variants={cardVariants}
       initial="hidden"
       animate="visible"
@@ -114,17 +113,22 @@ export default function AdminDashboard() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {statCards.map((card, index) => (
-              <StatCard key={card.label} {...card} index={index} />
+          <motion.div
+            className="grid grid-cols-2 gap-4 lg:grid-cols-4"
+            initial="hidden"
+            animate="visible"
+            variants={{ visible: { transition: { staggerChildren: 0.04 } } }}
+          >
+            {statCards.map((card) => (
+              <StatCard key={card.label} {...card} />
             ))}
-          </div>
+          </motion.div>
 
           <motion.div
             className="mt-10"
-            initial={{ opacity: 0, y: 12 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35, duration: 0.35 }}
+            transition={{ duration: 0.2 }}
           >
             <p className="admin-section-label">Quick actions</p>
             <div className="flex flex-wrap gap-2">

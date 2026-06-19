@@ -4,6 +4,7 @@ import Button from '../ui/Button'
 import Input from '../ui/Input'
 import Select from '../ui/Select'
 import Textarea from '../ui/Textarea'
+import CloudinaryPhotoField from '../ui/CloudinaryPhotoField'
 import PageLoader from './PageLoader'
 import { getErrorMessage } from '../../api/axios'
 import { changePassword, getProfile, updateProfile } from '../../api/patient'
@@ -38,6 +39,7 @@ export default function PatientProfile() {
         address: data.address || '',
         allergies: data.allergies || '',
         medical_history: data.medical_history || '',
+        photo_url: data.photo_url || '',
       })
     } catch (err) {
       setError(getErrorMessage(err))
@@ -101,6 +103,11 @@ export default function PatientProfile() {
       {success ? <p className="text-sm text-emerald-700">{success}</p> : null}
 
       <form onSubmit={handleSaveProfile} className="space-y-4 rounded-lg border border-slate-200 bg-white p-6">
+        <CloudinaryPhotoField
+          value={form.photo_url}
+          onChange={(photo_url) => setForm((prev) => ({ ...prev, photo_url }))}
+          initials={`${form.first_name?.[0] || ''}${form.last_name?.[0] || ''}`.toUpperCase() || '?'}
+        />
         <h2 className="text-sm font-semibold text-slate-900">Personal details</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Input label="First name" name="first_name" value={form.first_name} onChange={setField('first_name')} required />

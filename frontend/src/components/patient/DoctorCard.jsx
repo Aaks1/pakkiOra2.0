@@ -1,36 +1,10 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar, Clock } from 'lucide-react'
-import { getDoctorAvailableDates, getDoctorSlots } from '../../api/patient'
+import { Calendar } from 'lucide-react'
 import DoctorAvatar from './DoctorAvatar'
-import { doctorName, formatDoctorSchedule, formatTime, dateLabel } from '../../utils/patientFormat'
+import { doctorName, formatDoctorSchedule } from '../../utils/patientFormat'
 
 export default function DoctorCard({ doctor }) {
-  const [nextSlot, setNextSlot] = useState(null)
-  const [slotLoading, setSlotLoading] = useState(true)
   const schedule = formatDoctorSchedule(doctor)
-
-  useEffect(() => {
-    let active = true
-    ;(async () => {
-      setSlotLoading(true)
-      try {
-        const dates = await getDoctorAvailableDates(doctor.id, 14)
-        if (!active || !dates.length) return
-        const slotsData = await getDoctorSlots(doctor.id, dates[0])
-        const slot = slotsData?.slots?.[0]
-        if (slot && active) {
-          setNextSlot({ date: dates[0], time: slot.start_display || slot.start_time })
-        }
-      } catch {
-        /* ignore */
-      } finally {
-        if (active) setSlotLoading(false)
-      }
-    })()
-    return () => { active = false }
-  }, [doctor.id])
-
   const specialty = doctor.specialization || 'General'
   const experience = doctor.experience_years
 
@@ -59,15 +33,6 @@ export default function DoctorCard({ doctor }) {
             <p className="mt-0.5 text-xs text-slate-500">{schedule.hours}</p>
           ) : null}
         </div>
-
-        <p className="flex items-center gap-1.5 text-xs text-slate-600">
-          <Clock className="h-3.5 w-3.5 shrink-0 text-teal-500" aria-hidden="true" />
-          {slotLoading
-            ? 'Checking next available slot…'
-            : nextSlot
-              ? `Next available: ${dateLabel(nextSlot.date)} · ${formatTime(nextSlot.time)}`
-              : 'No open slots in the next 2 weeks'}
-        </p>
 
         <Link
           to={`/patient/book?doctor=${doctor.id}`}

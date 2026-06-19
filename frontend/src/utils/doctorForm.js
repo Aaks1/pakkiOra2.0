@@ -36,6 +36,7 @@ export const DOCTOR_INITIAL = {
   time_slots: '09:00-17:00',
   address: '',
   bio: '',
+  photo_url: '',
   available_days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
   is_active: true,
 }
@@ -74,6 +75,7 @@ export function doctorToForm(doctor) {
     time_slots: doctor.time_slots || '',
     address: doctor.address || '',
     bio: doctor.bio || '',
+    photo_url: doctor.photo_url || '',
     available_days: doctor.available_days || [],
     is_active: doctor.is_active !== false,
   }
@@ -110,5 +112,7 @@ export function buildDoctorPayload(form) {
   if (form.department?.trim()) payload.department = form.department.trim()
   if (form.address?.trim()) payload.address = form.address.trim()
   if (form.bio?.trim()) payload.bio = form.bio.trim()
+  if (form.photo_url?.trim()) payload.photo_url = form.photo_url.trim()
+  else payload.photo_url = null
   return payload
 }

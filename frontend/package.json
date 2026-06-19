@@ -11,6 +11,8 @@
     "extract-logo": "node scripts/extract-logo.mjs"
   },
   "dependencies": {
+    "@cloudinary/react": "^1.14.4",
+    "@cloudinary/url-gen": "^1.22.0",
     "@tanstack/react-query": "^5.101.0",
     "axios": "^1.17.0",
     "framer-motion": "^12.40.0",

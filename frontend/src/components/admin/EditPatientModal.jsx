@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import AdminModal from './AdminModal'
 import AdminField, { inputClass } from './AdminField'
+import CloudinaryPhotoField from '../ui/CloudinaryPhotoField'
 import { updateAdminPatient } from '../../api/admin'
 import { getErrorMessage } from '../../api/axios'
 
@@ -12,6 +13,7 @@ export default function EditPatientModal({ patient, open, onClose, onSaved }) {
     last_name: '',
     email: '',
     phone: '',
+    photo_url: '',
     is_active: true,
   })
   const [error, setError] = useState('')
@@ -24,6 +26,7 @@ export default function EditPatientModal({ patient, open, onClose, onSaved }) {
       last_name: patient.last_name || '',
       email: patient.email || '',
       phone: patient.phone || patient.profile?.phone || '',
+      photo_url: patient.profile?.photo_url || patient.photo_url || '',
       is_active: patient.is_active !== false,
     })
   }, [patient])
@@ -79,6 +82,14 @@ export default function EditPatientModal({ patient, open, onClose, onSaved }) {
         <AdminField label="Phone">
           <input className={inputClass} type="tel" value={form.phone} onChange={setField('phone')} />
         </AdminField>
+        <div className="sm:col-span-2">
+          <CloudinaryPhotoField
+            value={form.photo_url}
+            onChange={(photo_url) => setForm((prev) => ({ ...prev, photo_url }))}
+            initials={`${form.first_name?.[0] || ''}${form.last_name?.[0] || ''}`.toUpperCase() || '?'}
+            inputClass={inputClass}
+          />
+        </div>
         <AdminField label="Status">
           <select
             className={inputClass}

@@ -174,8 +174,16 @@ class DoctorViewSet(viewsets.ModelViewSet):
         }
 
         overview = []
+        serialized_slots = {
+            slot["start_time"]: serialized
+            for slot, serialized in zip(
+                generated,
+                SlotService.serialize_slots(generated),
+                strict=True,
+            )
+        }
         for slot in generated:
-            serialized = SlotService.serialize_slots([slot])[0]
+            serialized = dict(serialized_slots[slot["start_time"]])
             appt = appointments.get(slot["start_time"])
             if appt and appt.status == "BOOKED":
                 serialized["slot_status"] = "booked"

@@ -158,10 +158,21 @@ class AdminPatientViewSet(
                 setattr(user, field, data[field])
         user.save()
 
-        if "phone" in data and hasattr(user, "patient_profile"):
+        if hasattr(user, "patient_profile"):
             profile = user.patient_profile
-            profile.phone = data["phone"]
-            profile.save(update_fields=["phone"])
+            profile_updates = []
+            for field in ("first_name", "last_name"):
+                if field in data:
+                    setattr(profile, field, data[field])
+                    profile_updates.append(field)
+            if "phone" in data:
+                profile.phone = data["phone"]
+                profile_updates.append("phone")
+            if "photo_url" in data:
+                profile.photo_url = data["photo_url"] or None
+                profile_updates.append("photo_url")
+            if profile_updates:
+                profile.save(update_fields=profile_updates)
 
         return success_response(
             data=PatientAccountSerializer(user).data,

@@ -29,6 +29,7 @@ class PatientProfileSerializer(serializers.ModelSerializer):
             "emergency_contact_phone",
             "medical_history",
             "allergies",
+            "photo_url",
             "is_active",
             "date_joined",
             "created_at",

@@ -21,6 +21,7 @@ export default function PatientBook() {
   const [date, setDate] = useState('')
   const [slots, setSlots] = useState([])
   const [slot, setSlot] = useState(null)
+  const [slotsLoading, setSlotsLoading] = useState(false)
   const [symptoms, setSymptoms] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -41,21 +42,52 @@ export default function PatientBook() {
   }, [searchParams])
 
   useEffect(() => {
-    if (!doctorId) return
-    getDoctor(doctorId).then(setDoctor).catch(() => setDoctor(null))
-    getDoctorAvailableDates(doctorId, 30)
-      .then((d) => {
-        setDates(d)
-        if (d.length) setDate(d[0])
+    if (!doctorId) {
+      setDoctor(null)
+      setDates([])
+      setDate('')
+      setSlots([])
+      setSlot(null)
+      return
+    }
+
+    let active = true
+    Promise.all([
+      getDoctor(doctorId),
+      getDoctorAvailableDates(doctorId, 30),
+    ])
+      .then(([doc, availableDates]) => {
+        if (!active) return
+        setDoctor(doc)
+        setDates(availableDates)
+        setDate(availableDates[0] || '')
       })
-      .catch(() => setDates([]))
+      .catch(() => {
+        if (!active) return
+        setDoctor(null)
+        setDates([])
+        setDate('')
+      })
+
+    return () => { active = false }
   }, [doctorId])
 
   useEffect(() => {
     if (!doctorId || !date) return
+    let active = true
+    setSlotsLoading(true)
+    setSlot(null)
     getDoctorSlots(doctorId, date)
-      .then((data) => setSlots(data?.slots || []))
-      .catch(() => setSlots([]))
+      .then((data) => {
+        if (active) setSlots(data?.slots || [])
+      })
+      .catch(() => {
+        if (active) setSlots([])
+      })
+      .finally(() => {
+        if (active) setSlotsLoading(false)
+      })
+    return () => { active = false }
   }, [doctorId, date])
 
   const handleBook = async () => {
@@ -120,7 +152,7 @@ export default function PatientBook() {
       {step === 2 && (
         <div className="space-y-4">
           <DateSlider dates={dates} selected={date} onSelect={setDate} />
-          <SlotPicker slots={slots} selected={slot} onSelect={setSlot} />
+          <SlotPicker slots={slots} selected={slot} onSelect={setSlot} loading={slotsLoading} />
           <div className="flex gap-2">
             <button type="button" onClick={() => setStep(1)} className="rounded-md border border-slate-200 px-4 py-2 text-sm">Back</button>
             <button type="button" disabled={!slot} onClick={() => setStep(3)} className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white disabled:opacity-50">Continue</button>

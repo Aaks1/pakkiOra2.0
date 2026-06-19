@@ -139,6 +139,7 @@ class AdminPatientUpdateSerializer(serializers.Serializer):
     email = serializers.EmailField(required=False)
     is_active = serializers.BooleanField(required=False)
     phone = serializers.CharField(required=False, allow_blank=True)
+    photo_url = serializers.URLField(required=False, allow_blank=True, allow_null=True)
 
 
 class DashboardStatsSerializer(serializers.Serializer):

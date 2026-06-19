@@ -6,9 +6,13 @@ const PERIOD_LABELS = {
   evening: 'Evening',
 }
 
-export default function SlotPicker({ slots, selected, onSelect, bookedTimes = [] }) {
+export default function SlotPicker({ slots, selected, onSelect, bookedTimes = [], loading = false }) {
   const groups = groupSlotsByPeriod(slots)
   const bookedSet = new Set(bookedTimes.map((t) => String(t).slice(0, 5)))
+
+  if (loading) {
+    return <p className="text-sm text-slate-400">Loading available times…</p>
+  }
 
   if (!slots.length) {
     return <p className="text-sm text-slate-500">No slots available for this date.</p>
