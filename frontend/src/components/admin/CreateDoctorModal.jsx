@@ -109,7 +109,6 @@ export default function CreateDoctorModal({ open, onClose, onCreated }) {
             value={form.photo_url}
             onChange={(photo_url) => setForm((prev) => ({ ...prev, photo_url }))}
             initials={`${form.first_name?.[0] || ''}${form.last_name?.[0] || ''}`.toUpperCase() || 'DR'}
-            inputClass={inputClass}
           />
         </div>
         <AdminField label="Available days" className="sm:col-span-2">

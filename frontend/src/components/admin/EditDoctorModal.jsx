@@ -113,7 +113,6 @@ export default function EditDoctorModal({ doctor, open, onClose, onSaved }) {
             value={form.photo_url}
             onChange={(photo_url) => setForm((prev) => ({ ...prev, photo_url }))}
             initials={`${form.first_name?.[0] || ''}${form.last_name?.[0] || ''}`.toUpperCase() || 'DR'}
-            inputClass={inputClass}
           />
         </div>
         <AdminField label="Status">

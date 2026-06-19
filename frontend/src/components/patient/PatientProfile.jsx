@@ -5,7 +5,6 @@ import Input from '../ui/Input'
 import Select from '../ui/Select'
 import Textarea from '../ui/Textarea'
 import CloudinaryPhotoField from '../ui/CloudinaryPhotoField'
-import ProfileAvatar from '../ui/ProfileAvatar'
 import PageLoader from './PageLoader'
 import { useAuth } from '../../context/AuthContext'
 import { getErrorMessage } from '../../api/axios'
@@ -110,15 +109,21 @@ export default function PatientProfile() {
     <div className="mx-auto max-w-2xl space-y-8">
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-gradient-to-r from-blue-50/80 to-teal-50/50 p-6">
         <div className="flex flex-wrap items-center gap-4">
-          <ProfileAvatar
-            photoUrl={form.photo_url}
+          <CloudinaryPhotoField
+            value={form.photo_url}
+            onChange={(photo_url) => {
+              setForm((prev) => ({ ...prev, photo_url }))
+              updateUser({ photo_url })
+            }}
             initials={patientInitials(form)}
             size="2xl"
+            showLabel={false}
           />
           <div className="min-w-0">
             <h1 className="text-xl font-semibold text-slate-800">{patientDisplayName(form)}</h1>
             <p className="mt-1 text-sm text-slate-600">{form.email}</p>
             {form.phone ? <p className="mt-0.5 text-sm text-slate-500">{form.phone}</p> : null}
+            <p className="mt-2 text-xs text-slate-500">Click photo to change</p>
           </div>
         </div>
       </section>
@@ -127,14 +132,6 @@ export default function PatientProfile() {
       {success ? <p className="text-sm text-emerald-700">{success}</p> : null}
 
       <form onSubmit={handleSaveProfile} className="space-y-4 rounded-lg border border-slate-200 bg-white p-6">
-        <CloudinaryPhotoField
-          value={form.photo_url}
-          onChange={(photo_url) => {
-            setForm((prev) => ({ ...prev, photo_url }))
-            updateUser({ photo_url })
-          }}
-          initials={patientInitials(form)}
-        />
         <h2 className="text-sm font-semibold text-slate-900">Personal details</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Input label="First name" name="first_name" value={form.first_name} onChange={setField('first_name')} required />

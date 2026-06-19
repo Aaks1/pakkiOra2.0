@@ -13,9 +13,13 @@ function getClient() {
 }
 
 export function extractPublicId(url) {
-  if (!url || !cloudName || !url.includes(`res.cloudinary.com/${cloudName}`)) return null
-  const match = url.match(/\/upload\/(?:v\d+\/)?(.+)$/)
-  return match?.[1] || null
+  if (!url) return null
+  const match = url.match(/res\.cloudinary\.com\/([^/]+)\/image\/upload\/(?:v\d+\/)?(.+)$/)
+  if (!match) return null
+  const urlCloud = match[1]
+  const publicId = match[2]
+  if (cloudName && urlCloud !== cloudName) return null
+  return publicId || null
 }
 
 const SIZE_PX = { sm: 72, md: 80, lg: 96, xl: 128, '2xl': 160 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AdvancedImage } from '@cloudinary/react'
 import { getAvatarImage } from '../../utils/cloudinary'
 
@@ -12,23 +12,30 @@ const SIZES = {
 
 export default function ProfileAvatar({ photoUrl, initials, size = 'md', className = '' }) {
   const [failed, setFailed] = useState(false)
+  const [useDirectImg, setUseDirectImg] = useState(false)
   const sizeClass = SIZES[size] || SIZES.md
-  const cldImg = !failed ? getAvatarImage(photoUrl, size) : null
+  const url = photoUrl?.trim() || ''
+  const cldImg = !failed && !useDirectImg ? getAvatarImage(url, size) : null
 
-  if (cldImg) {
-    return (
-      <AdvancedImage
-        cldImg={cldImg}
-        className={`shrink-0 rounded-full object-cover ${sizeClass} ${className}`}
-        onError={() => setFailed(true)}
-      />
-    )
-  }
+  useEffect(() => {
+    setFailed(false)
+    setUseDirectImg(false)
+  }, [url])
 
-  if (photoUrl && !failed) {
+  if (url && !failed) {
+    if (cldImg) {
+      return (
+        <AdvancedImage
+          cldImg={cldImg}
+          className={`shrink-0 rounded-full object-cover ${sizeClass} ${className}`}
+          onError={() => setUseDirectImg(true)}
+        />
+      )
+    }
+
     return (
       <img
-        src={photoUrl}
+        src={url}
         alt=""
         className={`shrink-0 rounded-full object-cover ${sizeClass} ${className}`}
         onError={() => setFailed(true)}

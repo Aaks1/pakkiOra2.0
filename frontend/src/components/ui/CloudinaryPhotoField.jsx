@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Upload } from 'lucide-react'
+import { Camera } from 'lucide-react'
 import ProfileAvatar from './ProfileAvatar'
 import { isCloudinaryConfigured, uploadToCloudinary } from '../../utils/cloudinary'
 
@@ -8,7 +8,8 @@ export default function CloudinaryPhotoField({
   value,
   onChange,
   initials = '?',
-  inputClass = 'w-full rounded-md border border-slate-200 px-3 py-2 text-sm',
+  size = 'lg',
+  showLabel = true,
 }) {
   const inputRef = useRef(null)
   const [uploading, setUploading] = useState(false)
@@ -31,34 +32,34 @@ export default function CloudinaryPhotoField({
     }
   }
 
+  const canUpload = isCloudinaryConfigured && !uploading
+
   return (
-    <div className="space-y-3">
-      <p className="text-sm font-medium text-slate-700">{label}</p>
-      <div className="flex items-center gap-4">
-        <ProfileAvatar photoUrl={value} initials={initials} size="lg" />
-        <div className="flex-1 space-y-2">
-          {isCloudinaryConfigured ? (
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              disabled={uploading}
-              className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:border-slate-300 disabled:opacity-50"
-            >
-              <Upload className="h-4 w-4" aria-hidden="true" />
-              {uploading ? 'Uploading…' : 'Upload image'}
-            </button>
-          ) : (
-            <p className="text-xs text-slate-500">Paste a Cloudinary URL below, or set Cloudinary env vars to enable upload.</p>
-          )}
-          <input
-            className={inputClass}
-            type="url"
-            value={value || ''}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="https://res.cloudinary.com/..."
-          />
-        </div>
-      </div>
+    <div className="inline-flex flex-col items-start gap-2">
+      {showLabel ? <p className="text-sm font-medium text-slate-700">{label}</p> : null}
+      <button
+        type="button"
+        onClick={() => canUpload && inputRef.current?.click()}
+        disabled={!isCloudinaryConfigured || uploading}
+        className="group relative shrink-0 rounded-full disabled:cursor-not-allowed"
+        title={canUpload ? 'Upload photo' : uploading ? 'Uploading…' : 'Photo upload unavailable'}
+        aria-label={canUpload ? 'Upload profile photo' : 'Profile photo'}
+      >
+        <ProfileAvatar photoUrl={value} initials={initials} size={size} />
+        {canUpload ? (
+          <span className="absolute inset-0 flex items-center justify-center rounded-full bg-slate-900/45 opacity-0 transition-opacity group-hover:opacity-100">
+            <Camera className="h-5 w-5 text-white" aria-hidden="true" />
+          </span>
+        ) : null}
+        {uploading ? (
+          <span className="absolute inset-0 flex items-center justify-center rounded-full bg-white/80 text-xs font-medium text-slate-600">
+            …
+          </span>
+        ) : null}
+      </button>
+      {!isCloudinaryConfigured ? (
+        <p className="max-w-[12rem] text-xs text-slate-500">Set Cloudinary env vars to enable photo upload.</p>
+      ) : null}
       {error ? <p className="text-xs text-red-600">{error}</p> : null}
       <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
     </div>
