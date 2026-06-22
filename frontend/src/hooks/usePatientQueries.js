@@ -54,6 +54,7 @@ export function useInvalidatePatientData() {
 }
 
 export function prefetchPatientData(queryClient) {
+  // Warm cache when the patient layout mounts.
   return Promise.all([
     queryClient.prefetchQuery({
       queryKey: doctorsQueryKey(''),

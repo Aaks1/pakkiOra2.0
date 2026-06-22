@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { getAccessToken, getRefreshToken, setTokens, clearAuth } from '../utils/storage'
 
+// Dev: Vite proxies /api/v1 → localhost:8000. Prod: set VITE_API_URL on the host.
 const API_URL =
   import.meta.env.VITE_API_URL ||
   (import.meta.env.DEV ? '/api/v1' : 'http://127.0.0.1:8000/api/v1')
@@ -22,6 +23,7 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config
+    // On 401, try once to refresh the access token before sending the user to login.
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true
       const refresh = getRefreshToken()
@@ -45,6 +47,7 @@ api.interceptors.response.use(
 )
 
 export function unwrap(response) {
+  // Backend wraps payloads in { success, message, data }.
   return response.data?.data ?? response.data
 }
 

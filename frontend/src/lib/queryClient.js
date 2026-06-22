@@ -1,5 +1,6 @@
 import { QueryClient } from '@tanstack/react-query'
 
+// Shared cache for doctors, history, and booking — reduces repeat API calls in the patient portal.
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

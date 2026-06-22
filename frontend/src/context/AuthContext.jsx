@@ -28,6 +28,7 @@ export function AuthProvider({ children }) {
   })
   const [bootstrapping, setBootstrapping] = useState(true)
 
+  // Rehydrate session from localStorage on first load.
   useEffect(() => {
     const stored = getStoredUser()
     if (stored && getAccessToken()) {
@@ -73,7 +74,7 @@ export function AuthProvider({ children }) {
     } finally {
       clearAuth()
       setUser(null)
-      queryClient.clear()
+      queryClient.clear()  // drop cached patient data after sign-out
     }
   }, [])
 

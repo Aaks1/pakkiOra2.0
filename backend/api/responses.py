@@ -3,6 +3,8 @@ from typing import Any, Optional
 from rest_framework import status
 from rest_framework.response import Response
 
+# All API responses use { success, message, data|errors } so the React client can parse uniformly.
+
 
 def success_response(
     data: Any = None,

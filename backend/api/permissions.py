@@ -8,6 +8,7 @@ def is_admin_user(user) -> bool:
 def is_patient_user(user) -> bool:
     if not user.is_authenticated or not user.is_active:
         return False
+    # Staff accounts use admin routes, not the patient portal.
     if is_admin_user(user):
         return False
     return hasattr(user, "patient_profile")

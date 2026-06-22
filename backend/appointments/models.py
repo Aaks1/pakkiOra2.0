@@ -27,6 +27,7 @@ class Appointment(models.Model):
     class Meta:
         ordering = ["date", "start_time"]
         constraints = [
+            # Only one BOOKED row per doctor/date/time; cancelled slots can be rebooked.
             models.UniqueConstraint(
                 fields=["doctor", "date", "start_time"],
                 condition=Q(status="BOOKED"),

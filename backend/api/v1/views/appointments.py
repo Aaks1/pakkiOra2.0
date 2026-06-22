@@ -137,6 +137,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"])
     def history(self, request):
         """Grouped appointment history: upcoming, past, cancelled, completed."""
+        # Single DB query, grouped in Python — avoids five separate round-trips.
         appointments = list(self.filter_queryset(self.get_queryset()))
         today = timezone.now().date()
 

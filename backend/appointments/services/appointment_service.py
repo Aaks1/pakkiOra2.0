@@ -79,6 +79,7 @@ class AppointmentService:
         ).time()
 
         with transaction.atomic():
+            # Lock rows to reduce double-booking under concurrent requests.
             conflict = (
                 Appointment.objects.select_for_update()
                 .filter(
@@ -92,6 +93,7 @@ class AppointmentService:
             if conflict:
                 raise ServiceError("This slot is already booked. Please choose another slot.")
 
+            # Reuse a cancelled row so the partial unique constraint stays satisfied.
             cancelled = (
                 Appointment.objects.select_for_update()
                 .filter(

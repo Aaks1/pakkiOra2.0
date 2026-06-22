@@ -58,6 +58,7 @@ class LoginView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
 
+        # Frontend routing uses role; staff always maps to admin dashboard.
         if user.is_staff:
             role = "admin"
         elif hasattr(user, "patient_profile"):

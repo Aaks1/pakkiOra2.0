@@ -22,6 +22,7 @@ import {
   AdminSlots,
 } from './components/admin'
 
+/** Gate routes by JWT session; admins and patients use separate dashboards. */
 function ProtectedRoute({ children, requireAdmin = false }) {
   const { isAuthenticated, isAdmin, bootstrapping } = useAuth()
 
@@ -33,6 +34,7 @@ function ProtectedRoute({ children, requireAdmin = false }) {
   return children
 }
 
+/** Redirect signed-in users away from login/register. */
 function AuthOnlyRoute({ children }) {
   const { isAuthenticated, isAdmin, bootstrapping } = useAuth()
 

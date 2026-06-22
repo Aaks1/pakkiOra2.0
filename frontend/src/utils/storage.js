@@ -2,6 +2,7 @@ const ACCESS_KEY = 'pakkiora_access'
 const REFRESH_KEY = 'pakkiora_refresh'
 const USER_KEY = 'pakkiora_user'
 
+// JWT and session user persisted in localStorage for page reloads.
 export function getAccessToken() {
   return localStorage.getItem(ACCESS_KEY)
 }

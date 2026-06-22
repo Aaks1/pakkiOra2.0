@@ -1,5 +1,6 @@
 """
-Django settings — PostgreSQL (Neon) via DATABASE_URL.
+Django settings — PostgreSQL via DATABASE_URL (Neon-compatible).
+Secrets and hostnames are loaded from environment variables, never hard-coded.
 """
 import os
 from datetime import timedelta
@@ -68,6 +69,7 @@ TEMPLATES = [
     },
 ]
 
+# PostgreSQL — required; set DATABASE_URL in .env (local) or host dashboard (production).
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ImproperlyConfigured(
@@ -99,6 +101,7 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Allowed browser origins for the React frontend (comma-separated in .env).
 CORS_ALLOWED_ORIGINS = [
     o.strip()
     for o in os.getenv(
