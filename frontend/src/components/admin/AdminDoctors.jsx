@@ -8,7 +8,6 @@ import { AdminError, AdminSuccess } from './AdminFeedback'
 import CreateDoctorModal from './CreateDoctorModal'
 import EditDoctorModal from './EditDoctorModal'
 import DoctorSlotModal from './DoctorSlotModal'
-import DoctorAppointmentsSection from './DoctorAppointmentsSection'
 import AdminPersonCell from './AdminPersonCell'
 import { deleteDoctor, listDoctors, toggleDoctorActive } from '../../api/admin'
 import { getErrorMessage } from '../../api/axios'
@@ -26,7 +25,6 @@ export default function AdminDoctors() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editDoctor, setEditDoctor] = useState(null)
   const [slotDoctor, setSlotDoctor] = useState(null)
-  const [viewAppointmentsDoctor, setViewAppointmentsDoctor] = useState(null)
   const [actionId, setActionId] = useState(null)
 
   const loadDoctors = useCallback(async () => {
@@ -127,7 +125,6 @@ export default function AdminDoctors() {
         <AdminRowActions>
           <AdminAction onClick={() => setEditDoctor(r)}>Edit</AdminAction>
           <AdminAction onClick={() => setSlotDoctor(r)}>Slots</AdminAction>
-          <AdminAction onClick={() => setViewAppointmentsDoctor(r)}>View</AdminAction>
           <AdminAction destructive disabled={actionId === r.id} onClick={() => handleToggle(r)}>
             {r.is_active ? 'Deactivate' : 'Activate'}
           </AdminAction>
@@ -179,13 +176,6 @@ export default function AdminDoctors() {
       </div>
 
       <AdminDataTable columns={columns} rows={doctors} loading={loading} emptyMessage="No doctors found." />
-
-      {viewAppointmentsDoctor ? (
-        <DoctorAppointmentsSection
-          doctor={viewAppointmentsDoctor}
-          onClose={() => setViewAppointmentsDoctor(null)}
-        />
-      ) : null}
 
       <CreateDoctorModal
         open={createOpen}

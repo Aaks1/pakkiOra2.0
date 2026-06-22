@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import * as authApi from '../api/auth'
+import { queryClient } from '../lib/queryClient'
 import {
   clearAuth,
   getAccessToken,
@@ -72,6 +73,7 @@ export function AuthProvider({ children }) {
     } finally {
       clearAuth()
       setUser(null)
+      queryClient.clear()
     }
   }, [])
 

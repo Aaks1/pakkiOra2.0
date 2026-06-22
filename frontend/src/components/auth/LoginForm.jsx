@@ -12,9 +12,21 @@ export default function LoginForm() {
   const [form, setForm] = useState({ username: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+
+  const handleChange = (key) => (e) => {
+    setForm((prev) => ({ ...prev, [key]: e.target.value }))
+    if (submitted) setError('')
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setSubmitted(true)
+
+    if (!form.username.trim() && !form.password) {
+      setError('Enter your username and password.')
+      return
+    }
     if (!form.username.trim()) {
       setError('Username is required.')
       return
@@ -23,6 +35,7 @@ export default function LoginForm() {
       setError('Password is required.')
       return
     }
+
     setError('')
     setLoading(true)
     try {
@@ -45,7 +58,7 @@ export default function LoginForm() {
         </p>
       </header>
 
-      <Alert message={error} onClose={() => setError('')} />
+      {submitted && error ? <Alert message={error} onClose={() => setError('')} /> : null}
 
       <form onSubmit={handleSubmit} className="auth-panel__form" noValidate>
         <Input
@@ -53,9 +66,8 @@ export default function LoginForm() {
           name="username"
           placeholder="Your username"
           autoComplete="username"
-          required
           value={form.username}
-          onChange={(e) => setForm({ ...form, username: e.target.value })}
+          onChange={handleChange('username')}
         />
         <Input
           label="Password"
@@ -63,9 +75,8 @@ export default function LoginForm() {
           type="password"
           placeholder="Your password"
           autoComplete="current-password"
-          required
           value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          onChange={handleChange('password')}
         />
 
         <Button type="submit" variant="primary" loading={loading} className="auth-panel__submit btn--lg">

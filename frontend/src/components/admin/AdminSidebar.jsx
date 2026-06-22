@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Activity, ExternalLink, LogOut } from 'lucide-react'
+import { Activity, LogOut } from 'lucide-react'
 import { ADMIN_NAV } from './adminNav'
 
 export default function AdminSidebar({ username, onLogout, onNavigate }) {
@@ -35,11 +35,7 @@ export default function AdminSidebar({ username, onLogout, onNavigate }) {
 
       <div className="admin-sidebar__footer">
         <p className="admin-sidebar__user">{username || 'Admin'}</p>
-        <div className="mt-2 flex flex-col gap-1">
-          <NavLink to="/" onClick={onNavigate} className="admin-sidebar__meta-link">
-            <ExternalLink className="h-3 w-3" aria-hidden="true" />
-            View site
-          </NavLink>
+        <div className="mt-2">
           <button type="button" onClick={onLogout} className="admin-sidebar__meta-link">
             <LogOut className="h-3 w-3" aria-hidden="true" />
             Logout

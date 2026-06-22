@@ -30,7 +30,7 @@ function SidebarInner({ onNavigate }) {
 
   const handleLogout = async () => {
     await logout()
-    navigate('/login')
+    navigate('/login', { replace: true })
   }
 
   return (
